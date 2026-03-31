@@ -15,7 +15,8 @@ classdef CSSuiButton < CSSBase
     properties (Access = public)
         Text            = 'Button'
         Icon            = ''
-        IconPosition    = 'top'      % New
+        IconPosition    = 'top'      % 'top' | 'bottom' | 'left' | 'right'
+        IconSize        = '1.2em'    % CSS size string, e.g. '18px', '1.5em', '24px'
         ButtonPushedFcn = []
     end
 
@@ -32,7 +33,8 @@ classdef CSSuiButton < CSSBase
                 options.CSSFile         (1,:) char    = ''
                 options.Text            (1,:) char    = 'Button'
                 options.Icon            (1,:) char    = ''
-                options.IconPosition    (1,:) char    = 'top'      % New
+                options.IconPosition    (1,:) char    = 'top'
+                options.IconSize        (1,:) char    = '1.2em'
                 options.ButtonPushedFcn               = []
                 % --- CSS convenience properties (forwarded to CSSBase) ----
                 options.Color               (1,:) char = ''
@@ -75,7 +77,8 @@ classdef CSSuiButton < CSSBase
             obj.applyCSSOptions(options);
             obj.ButtonPushedFcn = options.ButtonPushedFcn;
             obj.Text            = options.Text;
-            obj.IconPosition    = options.IconPosition;   % New
+            obj.IconPosition    = options.IconPosition;
+            obj.IconSize        = options.IconSize;
 
             % Resolve icon: filepath --> SVG inner markup
             ic = options.Icon;
@@ -119,6 +122,12 @@ classdef CSSuiButton < CSSBase
                 obj.refresh();
             end
         end
+
+        % --- Structural: IconSize ----------------------------------------
+        function set.IconSize(obj, val)
+            obj.IconSize = val;
+            if ~obj.Updating_ && obj.isReady(), obj.refresh(); end
+        end
     end
 
     % =====================================================================
@@ -127,10 +136,12 @@ classdef CSSuiButton < CSSBase
         function html = buildHTML(obj)
             iconHTML = '';
             if ~isempty(obj.Icon)
+                sz = obj.IconSize;
+                if isempty(sz), sz = '1.2em'; end
                 iconHTML = sprintf( ...
-                    ['<svg viewBox="0 0 24 24" style="width:1.2em;' ...
-                    'height:1.2em;fill:currentColor;flex-shrink:0;">%s</svg>'], ...
-                    obj.Icon);
+                    ['<svg viewBox="0 0 24 24" style="width:%s;' ...
+                    'height:%s;fill:currentColor;flex-shrink:0;">%s</svg>'], ...
+                    sz, sz, obj.Icon);
             end
 
             % Determine flex direction

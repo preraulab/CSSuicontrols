@@ -185,7 +185,18 @@ classdef (Abstract) CSSBase < handle
 
         function set.Enabled(obj, val)
             obj.Enabled_ = logical(val);
-            obj.pushCmd(struct('cmd', 'setEnabled', 'value', obj.Enabled_));
+            if obj.Loaded_ && obj.isReady()
+                % Send setEnabled + current CSS as one atomic batch so that
+                % toggling enable/disable can never leave the CSS out of sync.
+                batchCmd.cmd      = 'batch';
+                batchCmd.commands = { ...
+                    struct('cmd','setEnabled','value',obj.Enabled_), ...
+                    struct('cmd','setCSS','content',obj.buildFullCSS()) ...
+                };
+                obj.HTMLComponent.Data = batchCmd;
+            else
+                obj.CmdQueue_{end+1} = struct('cmd','setEnabled','value',obj.Enabled_);
+            end
         end
         function val = get.Enabled(obj), val = obj.Enabled_; end
 
@@ -458,8 +469,16 @@ classdef (Abstract) CSSBase < handle
         function flushQueue(obj)
             if isempty(obj.CmdQueue_), return; end
             if ~isempty(obj.HTMLComponent) && isvalid(obj.HTMLComponent)
-                for i = 1:numel(obj.CmdQueue_)
-                    obj.HTMLComponent.Data = obj.CmdQueue_{i};
+                if numel(obj.CmdQueue_) == 1
+                    obj.HTMLComponent.Data = obj.CmdQueue_{1};
+                else
+                    % Batch all pending commands into one Data assignment so the
+                    % JS DataChanged handler sees them all in a single event.
+                    % This prevents the race where rapid successive Data writes
+                    % cause the JS to read only the latest value for every event.
+                    batchCmd.cmd      = 'batch';
+                    batchCmd.commands = obj.CmdQueue_;
+                    obj.HTMLComponent.Data = batchCmd;
                 end
             end
             obj.CmdQueue_ = {};
@@ -547,9 +566,8 @@ classdef (Abstract) CSSBase < handle
                 'align-items:var(--align-items,stretch);' ...
                 'text-align:var(--text-align,inherit);' ...
                 '}' ...
-                '.uihb-disabled{pointer-events:none!important;}' ...
-                '.uihb-disabled > *{filter: grayscale(0.4) brightness(0.85);cursor:not-allowed!important;}' ...
-                '.uihb-disabled *{pointer-events:none!important;}' ...
+                '.uihb-disabled{pointer-events:none!important;filter:brightness(0.65);}' ...
+                '.uihb-disabled *{pointer-events:none!important;cursor:not-allowed!important;}' ...
                 ];
 
             % <style id="cssbase-user"> holds :root{vars} + obj.CSS together
