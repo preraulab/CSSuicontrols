@@ -1,13 +1,22 @@
 classdef CSSuiLabel < CSSBase
-%UILABEL  CSS-styled text label component.
+%CSSuiLabel  CSS-styled text label backed by uihtml.
 %
 %   USAGE
-%     lbl = uiLabel(parent, 'Text','Status:')
-%     lbl = uiLabel(parent, 'Text','Title', 'Style','shadow')
+%     lbl = CSSuiLabel(parent, 'Text','Status:')
+%     lbl = CSSuiLabel(parent, 'Text','Title', 'Style','shadow')
 %     lbl.Text = 'Updated';        % live-patches without rebuild
 %
 %   PROPERTIES
 %     Text    Display string                                    default: 'Label'
+%
+%   CSS ELEMENT SCHEMA
+%     #css-root / .css-control    Same element — the label IS the root div.
+%       #cssbase-text             Span holding the text (live-patchable).
+%     .css-disabled               On #css-root when Enabled=false.
+%
+%   CUSTOM CSS EXAMPLES
+%     lbl.CSS = '#css-root { text-transform: uppercase; }';
+%     lbl.CSS = '#cssbase-text { text-decoration: underline; }';
 
     properties (Access = public)
         Text = 'Label'
@@ -87,7 +96,7 @@ classdef CSSuiLabel < CSSBase
             % Global reset and html/body base are provided by CSSBase infraCSS.
             % setText is handled by the CSSBase bridge targeting id="cssbase-text".
             css = [ ...
-                '#uihb{display:flex;align-items:center;width:100%;height:100%;' ...
+                '#css-root{display:flex;align-items:center;width:100%;height:100%;' ...
                 'color:var(--color,inherit);' ...
                 'background-color:var(--bg-color,transparent);' ...
                 'font-size:var(--font-size,13px);' ...
@@ -102,7 +111,7 @@ classdef CSSuiLabel < CSSBase
 
             html = [ ...
                 '<!DOCTYPE html><html><head><style>' css '</style></head><body>' ...
-                '<div id="uihb" class="css-surface css-label"><span id="cssbase-text">' ...
+                '<div id="css-root" class="css-surface css-label css-control"><span id="cssbase-text">' ...
                 CSSBase.htmlEscape(obj.Text) '</span></div>' ...
                 '</body></html>' ...
             ];

@@ -1,59 +1,139 @@
 classdef (Abstract) CSSBase < handle
     %CSSBASE  Abstract base class for CSS-styled HTML-backed MATLAB UI controls.
     %
-    %   Manages the complete lifecycle for HTML-backed components:
-    %     - uihtml creation, Position, Layout, and DataChangedFcn routing
-    %     - Temp-file write / delete lifecycle
-    %     - JS bridge injection (command/event protocol)
-    %     - Enabled state with pre-load command queuing
-    %     - CSS convenience properties as CSS custom properties (:root vars)
-    %     - Raw CSS string and external CSS file support
-    %     - Style presets via CSSPreset
+    %   Every CSSBase component is a uihtml element whose content is a
+    %   self-contained HTML document.  CSSBase handles the full lifecycle:
+    %   temp-file writing, JS bridge injection, Enabled-state queuing, CSS
+    %   variable compilation, and live CSS patching without page reloads.
     %
-    %   HIERARCHY
-    %     CSSBase  (lifecycle + CSS)
-    %       +-- uiButton / uiLabel / uiDropdown / ...  (concrete components)
+    %   -----------------------------------------------------------------------
+    %   HTML / CSS ELEMENT SCHEMA
+    %   -----------------------------------------------------------------------
+    %   Every component produces an HTML document with this structure:
     %
-    %     CSSPreset  (independent value class for named style presets)
+    %     <body>
+    %       <div id="css-root">          ← sizing container (CSSBase-managed)
+    %         <div class="css-control">  ← main visual/interactive element
+    %         <div class="css-label">    ← adjacent text label  (if present)
+    %         <svg  class="css-icon">    ← SVG icon              (if present)
+    %       </div>
+    %     </body>
+    %
+    %   Selector reference:
+    %     #css-root       Outer sizing container.  Width/Height/OuterPadding/
+    %                     Border convenience properties map here.  Receives
+    %                     .css-disabled when Enabled=false.
+    %     .css-control    The main interactive surface — the <button>, input
+    %                     wrapper, <textarea>, toggle track, dropdown wrapper,
+    %                     or label div, depending on the component.
+    %     .css-label      Adjacent descriptive text label (EditField, Dropdown,
+    %                     NumericField, Switch, TextArea only).
+    %     .css-icon       SVG icon element (CSSuiButton only).
+    %     #cssbase-text   Span whose textContent is live-patched by JS without
+    %                     a page reload (button text, label text, switch label).
+    %     .css-disabled   Applied to #css-root when Enabled=false; sets opacity:0.5,
+    %                     removes box-shadow on all children, and blocks pointer-events.
+    %     .css-surface    Applied to the primary rendered surface; targeted by
+    %                     CSSPreset hover/active/transition rules.
+    %     .css-clickable  Applied to interactive surfaces; enables hover lift and
+    %                     active press animations from CSSPreset.
+    %
+    %   -----------------------------------------------------------------------
+    %   WRITING CUSTOM CSS  (obj.CSS property)
+    %   -----------------------------------------------------------------------
+    %   Use the convenience properties (Color, BackgroundColor, …) for the most
+    %   common appearance changes — they compile to :root CSS variables and are
+    %   always reliable.  Use obj.CSS for anything not covered:
+    %
+    %     % Works identically for any component — no per-component knowledge needed:
+    %     obj.CSS = '.css-control { text-transform: uppercase; letter-spacing: 0.08em; }';
+    %     obj.CSS = '.css-label  { font-style: italic; }';
+    %     obj.CSS = '.css-icon   { fill: #E53935; }';
+    %
+    %     % Override disabled appearance (e.g. make it more faded):
+    %     obj.CSS = '.css-disabled { opacity: 0.3; }';
+    %
+    %     % Suppress the default hover lift on a button:
+    %     btn.CSS = '.css-control.css-clickable:hover { transform: none !important; }';
+    %
+    %   NOTE: obj.CSS is injected into <style id="cssbase-user"> which sits
+    %   BEFORE the component's own <style> in the cascade.  At equal specificity
+    %   the component default wins.  Use CSS variables (convenience properties)
+    %   to reliably change appearance, or match/exceed component specificity /
+    %   use !important for structural overrides.
+    %
+    %   -----------------------------------------------------------------------
+    %   CSS VARIABLE MAP  (convenience properties → :root custom props)
+    %   -----------------------------------------------------------------------
+    %     Color               → --color
+    %     BackgroundColor     → --bg-color
+    %     FontSize            → --font-size
+    %     FontFamily          → --font-family
+    %     FontWeight          → --font-weight
+    %     FontStyle           → --font-style
+    %     LetterSpacing       → --letter-spacing
+    %     LineHeight          → --line-height
+    %     TextTransform       → --text-transform
+    %     TextDecoration      → --text-decoration
+    %     HorizontalAlignment → --text-align        ('left'|'center'|'right')
+    %     VerticalAlignment   → --align-items       ('top'|'center'|'bottom')
+    %     BorderRadius        → --border-radius
+    %     BoxShadow           → --box-shadow
+    %     InsetShadow         → --inset-shadow
+    %     Opacity             → --opacity
+    %     Cursor              → --cursor
+    %     Padding             → --padding
+    %     Width               → --width
+    %     Height              → --height
+    %     OuterPadding        → --outer-padding
+    %     Border              → --border
+    %     MinWidth            → --min-width
+    %     MinHeight           → --min-height
+    %     MaxWidth            → --max-width
+    %     MaxHeight           → --max-height
+    %
+    %   -----------------------------------------------------------------------
+    %   EXTERNAL THEME FILE  (obj.CSSFile property)
+    %   -----------------------------------------------------------------------
+    %   Point multiple components at a shared .css file for a consistent theme.
+    %   The <link> is injected first (lowest cascade priority), so per-component
+    %   properties and obj.CSS always override it:
+    %
+    %     obj.CSSFile = fullfile(pwd, 'mytheme.css');
+    %
+    %   -----------------------------------------------------------------------
+    %   CASCADE ORDER  (lowest → highest priority)
+    %   -----------------------------------------------------------------------
+    %     1.  CSSFile  <link>                (external theme)
+    %     2.  infraCSS  <style>              (#css-root sizing, .css-disabled)
+    %     3.  <style id="cssbase-user">      (:root vars + obj.CSS string)
+    %     4.  Component  <style>             (internal component defaults)
     %
     %   -----------------------------------------------------------------------
     %   SUBCLASS CONTRACT
     %   -----------------------------------------------------------------------
     %   1.  Call superclass constructor first:  obj@CSSBase(parent, ...)
     %   2.  Implement   html = buildHTML(obj)   (Abstract, protected).
-    %         - Return a complete HTML document (<html><head><style>...</style>
-    %           </head><body>...<script>...</script></body></html>).
-    %         - Must include an element with  id="uihb".
-    %         - Use var(--color), var(--bg-color), etc. for CSS custom props.
+    %         - Return a complete HTML document.
+    %         - Must include  <div id="css-root"> as the outermost body child.
+    %         - Place .css-control, .css-label, .css-icon inside #css-root.
+    %         - Reference appearance via var(--color), var(--bg-color), etc.
     %         - May define  window.componentSetup(hc)  for JS initialisation.
-    %         - May define  window.onCommand(cmd)  for MATLAB-->JS commands.
+    %         - May define  window.onCommand(cmd)  for MATLAB→JS commands.
     %   3.  Call  obj.endInit()  at the END of the concrete constructor.
-    %   4.  Override  onMessage(obj, data)  for custom JS-->MATLAB events.
-    %
-    %   -----------------------------------------------------------------------
-    %   CSS ARCHITECTURE
-    %   -----------------------------------------------------------------------
-    %   Convenience properties (Color, BackgroundColor, ...) compile to CSS
-    %   custom properties in :root.  Component CSS references them via
-    %   var(--color, fallback).  The obj.CSS string is injected AFTER the
-    %   component CSS so it can override anything.  CSSFile is linked BEFORE
-    %   all inline CSS.
-    %
-    %   Cascade order (lowest to highest priority):
-    %     1.  CSSFile  <link>        (external theme)
-    %     2.  :root variables        (convenience properties)
-    %     3.  Component CSS          (from buildHTML)
-    %     4.  obj.CSS string         (preset / user overrides)
+    %   4.  Override  onMessage(obj, data)  for custom JS→MATLAB events.
     %
     %   -----------------------------------------------------------------------
     %   BRIDGE PROTOCOL
     %   -----------------------------------------------------------------------
-    %   MATLAB --> JS:   obj.pushCmd(struct('cmd','...', ...))
-    %     'setEnabled'   toggle uihb-disabled class on #uihb
+    %   MATLAB → JS:   obj.pushCmd(struct('cmd','...', ...))
+    %     'setEnabled'   toggle .css-disabled on #css-root
+    %     'setCSS'       replace <style id="cssbase-user"> content
+    %     'setText'      patch #cssbase-text textContent
     %     'batch'        struct with .commands cell-array, dispatched in order
     %     (other)        forwarded to  window.onCommand(cmd)
     %
-    %   JS --> MATLAB:   window.sendEvent({event:'...', ...})
+    %   JS → MATLAB:   window.sendEvent({event:'...', ...})
     %     'ready'        component fully initialised (after componentSetup)
     %     'error'        JS exception  (.message field)
     %     (other)        forwarded to  obj.onMessage(data)
@@ -103,11 +183,12 @@ classdef (Abstract) CSSBase < handle
         MinHeight       = ''        % --min-height
         MaxWidth        = ''        % --max-width
         MaxHeight       = ''        % --max-height
-        % --- Container sizing (#uihb wrapper div) -------------------------
+        % --- Container sizing (#css-root wrapper div) ---------------------
         Width           = ''        % --width        e.g. '80%' or '120px'
         Height          = ''        % --height       e.g. '50%' or '32px'
         OuterPadding    = ''        % --outer-padding  inset between MATLAB boundary and control
         Border          = ''        % --border
+        AspectRatio      = ''       % --aspect-ratio e.g. '1/1'
     end
 
     properties (GetAccess = public, SetAccess = protected)
@@ -192,7 +273,7 @@ classdef (Abstract) CSSBase < handle
                 batchCmd.commands = { ...
                     struct('cmd','setEnabled','value',obj.Enabled_), ...
                     struct('cmd','setCSS','content',obj.buildFullCSS()) ...
-                };
+                    };
                 obj.HTMLComponent.Data = batchCmd;
             else
                 obj.CmdQueue_{end+1} = struct('cmd','setEnabled','value',obj.Enabled_);
@@ -282,6 +363,10 @@ classdef (Abstract) CSSBase < handle
         end
         function set.Height(obj, val)
             obj.Height = val;
+            obj.pushFullCSS();
+        end
+        function set.AspectRatio(obj, val)
+            obj.AspectRatio = val;
             obj.pushFullCSS();
         end
         function set.OuterPadding(obj, val)
@@ -457,7 +542,11 @@ classdef (Abstract) CSSBase < handle
             switch data.event
                 case 'ready'
                     obj.Loaded_ = true;
-                    obj.safeDeleteTempFile();
+                    % Do NOT delete the temp file here.  If CEF reloads the
+                    % webview after a tab switch it must still be able to read
+                    % the file.  safeDeleteTempFile() is called at the START of
+                    % the next refresh() call (and in delete()), so files never
+                    % accumulate.
                     obj.flushQueue();
                 case 'error'
                     warning('CSSBase:jsError', 'JS error: %s', data.message);
@@ -467,19 +556,26 @@ classdef (Abstract) CSSBase < handle
         end
 
         function flushQueue(obj)
-            if isempty(obj.CmdQueue_), return; end
-            if ~isempty(obj.HTMLComponent) && isvalid(obj.HTMLComponent)
-                if numel(obj.CmdQueue_) == 1
-                    obj.HTMLComponent.Data = obj.CmdQueue_{1};
-                else
-                    % Batch all pending commands into one Data assignment so the
-                    % JS DataChanged handler sees them all in a single event.
-                    % This prevents the race where rapid successive Data writes
-                    % cause the JS to read only the latest value for every event.
-                    batchCmd.cmd      = 'batch';
-                    batchCmd.commands = obj.CmdQueue_;
-                    obj.HTMLComponent.Data = batchCmd;
-                end
+            if isempty(obj.HTMLComponent) || ~isvalid(obj.HTMLComponent), return; end
+
+            % Always append a fresh setCSS as the LAST command (Fix 2).
+            % When the tab was in the background, CEF may have throttled or
+            % dropped earlier setCSS pushes.  Appending one here guarantees
+            % the correct CSS is applied the moment the component goes live,
+            % regardless of what was (or wasn't) processed before ready fired.
+            cssCmd  = struct('cmd', 'setCSS', 'content', obj.buildFullCSS());
+            allCmds = [obj.CmdQueue_ {cssCmd}];
+
+            if numel(allCmds) == 1
+                obj.HTMLComponent.Data = allCmds{1};
+            else
+                % Batch all pending commands into one Data assignment so the
+                % JS DataChanged handler sees them all in a single event.
+                % This prevents the race where rapid successive Data writes
+                % cause the JS to read only the latest value for every event.
+                batchCmd.cmd      = 'batch';
+                batchCmd.commands = allCmds;
+                obj.HTMLComponent.Data = batchCmd;
             end
             obj.CmdQueue_ = {};
         end
@@ -542,17 +638,17 @@ classdef (Abstract) CSSBase < handle
             % Infrastructure CSS: global reset, outer layout, container, disabled rule
             %
             %   html / body  — fill 100% of the uihtml position; body is a
-            %                  flex centering context for #uihb.
-            %   #uihb        — sizing container.  Width/Height/OuterPadding
+            %                  flex centering context for #css-root.
+            %   #css-root    — sizing container.  Width/Height/OuterPadding
             %                  control how it occupies the MATLAB component area.
             %                  Defaults to 100% × 100% with no padding so existing
             %                  components are visually unchanged unless overridden.
-            %   .uihb-disabled — pointer-events + opacity cascade to all children.
+            %   .css-disabled — opacity:0.5, box-shadow:none, pointer-events:none on all children.
             infraCSS = [ ...
                 '*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}' ...
                 'html,body{width:100%;height:100%;overflow:hidden;background:transparent;}' ...
                 'body{display:flex;align-items:center;justify-content:center;}' ...
-                '#uihb{' ...
+                '#css-root{' ...
                 'box-sizing:border-box;' ...
                 'width:var(--width,100%);' ...
                 'height:var(--height,100%);' ...
@@ -561,13 +657,14 @@ classdef (Abstract) CSSBase < handle
                 'max-width:var(--max-width,none);' ...
                 'max-height:var(--max-height,none);' ...
                 'padding:var(--outer-padding,0);' ...
+                'aspect-ratio:var(--aspect-ratio,none);' ...
                 'border:var(--border,none);' ...
                 'display:flex;' ...
                 'align-items:var(--align-items,stretch);' ...
                 'text-align:var(--text-align,inherit);' ...
                 '}' ...
-                '.uihb-disabled{pointer-events:none!important;filter:brightness(0.65);}' ...
-                '.uihb-disabled *{pointer-events:none!important;cursor:not-allowed!important;}' ...
+                '.css-disabled{pointer-events:none!important;opacity:0.5;}' ...
+                '.css-disabled *{pointer-events:none!important;cursor:not-allowed!important;box-shadow:none!important;text-shadow:none!important;}' ...
                 ];
 
             % <style id="cssbase-user"> holds :root{vars} + obj.CSS together
@@ -698,8 +795,8 @@ classdef (Abstract) CSSBase < handle
                 '}}}' ...
                 ...
                 'function applyEn(en){' ...
-                'var el=document.getElementById("uihb");' ...
-                'if(el)el.classList.toggle("uihb-disabled",!en);' ...
+                'var el=document.getElementById("css-root");' ...
+                'if(el)el.classList.toggle("css-disabled",!en);' ...
                 '}' ...
                 ...
                 'function setup(hc){' ...
@@ -758,6 +855,7 @@ classdef (Abstract) CSSBase < handle
                 'Width',               '--width', ...
                 'Height',              '--height', ...
                 'OuterPadding',        '--outer-padding', ...
+                'AspectRatio',         '--aspect-ratio', ...
                 'Border',              '--border');
         end
 

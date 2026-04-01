@@ -1,30 +1,45 @@
 classdef CSSPreset
-%CSSPRESET  Named CSS style presets for CSSBase components.
+%CSSPreset  Named CSS style presets for CSSBase components.
 %
-%   A CSSPreset is a pure data container — it holds CSS property values and
-%   a raw CSS string.  It has no behaviour beyond static factory methods.
-%   Pass it to any CSSBase component via the 'Style' constructor argument.
+%   A CSSPreset is a pure data container — it holds convenience property
+%   values and a raw CSS string.  It has no behaviour beyond static factory
+%   methods.  Pass it to any CSSBase component via the 'Style' argument.
 %
 %   USAGE
-%     btn = uiButton(parent, 'Style', 'shadow');        % by name
-%     btn = uiButton(parent, 'Style', CSSPreset.shadow());  % by object
+%     btn = CSSuiButton(parent, 'Style', 'shadow');          % by name
+%     btn = CSSuiButton(parent, 'Style', CSSPreset.shadow()); % by object
 %
-%     p = CSSPreset.shadow();
-%     p.Color = '#2a7a2a';        % customise before applying
-%     btn = uiButton(parent, 'Style', p);
+%     % Customise a preset before applying:
+%     p = CSSPreset.flat();
+%     p.Color = '#2a7a2a';
+%     btn = CSSuiButton(parent, 'Style', p);
+%
+%     % Change preset after construction:
+%     btn.setStyle('neon');
 %
 %   AVAILABLE PRESETS
-%     CSSPreset.shadow()  — Neumorphic raised-shadow style
+%     CSSPreset.shadow()  — Neumorphic raised-shadow (default for buttons/labels)
 %     CSSPreset.flat()    — Clean flat modern style
 %     CSSPreset.glass()   — Frosted-glass / glassmorphism style
-%     CSSPreset.neon()    — Cyberpunk dark with glowing borders
-%     CSSPreset.pill()    — Rounded pill with solid accent colour
+%     CSSPreset.neon()    — Cyberpunk dark with glowing cyan borders
+%     CSSPreset.pill()    — Rounded pill with solid purple accent
 %     CSSPreset.dark()    — Dark-mode flat (VS Code style)
 %     CSSPreset.list()    — Cell array of preset names
 %
+%   HOW PRESETS WORK
+%   A preset sets convenience properties (Color, BackgroundColor, …) and
+%   appends a CSS string that targets the standard element schema:
+%
+%     .css-surface    — primary rendered surface (button, input wrapper, etc.)
+%     .css-clickable  — interactive elements; adds hover/active animations
+%     .css-label      — adjacent text label (EditField, Dropdown, etc.)
+%
+%   These class names are stable across all components, so a single preset
+%   CSS string styles every component type consistently.
+%
 %   UTILITIES
-%     CSSPreset.scaleShadow(shadow, factor)
-%     CSSPreset.invertShadow(shadow)
+%     CSSPreset.scaleShadow(shadow, factor)   scale shadow px/em values
+%     CSSPreset.invertShadow(shadow)          flip outset → inset shadow
 
     % =====================================================================
     %  Properties — same names as CSSBase convenience properties + CSS
@@ -53,7 +68,7 @@ classdef CSSPreset
         function p = shadow()
             %SHADOW  Neumorphic raised-shadow preset.
             p = CSSPreset();
-            p.Color           = '#5f7080';
+            p.Color           = '#414c57';
             p.BackgroundColor = '';      % transparent — components use their own bg defaults
             p.FontFamily      = '"Segoe UI",system-ui,sans-serif';
             p.FontSize        = '12px';
@@ -68,7 +83,6 @@ classdef CSSPreset
 
             p.CSS = [ ...
                 '.css-surface{border:none;transition:box-shadow 0.15s ease,transform 0.15s ease;' ...
-                'letter-spacing:0.08em;text-transform:uppercase;}' ...
                 '.css-label{box-shadow:none!important;background-color:transparent!important;}' ...
                 '.css-clickable{cursor:pointer;user-select:none;}' ...
                 '.css-clickable:hover{transform:translateY(-2px);' ...

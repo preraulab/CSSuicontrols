@@ -1,23 +1,38 @@
 classdef CSSuiNumericField < CSSBase
-%UINUMERICFIELD  CSS-styled numeric edit field with optional step buttons.
+%CSSuiNumericField  CSS-styled numeric edit field with optional step buttons, backed by uihtml.
 %
 %   USAGE
-%     nf = uiNumericField(parent, 'Value',50, 'Min',0, 'Max',100)
-%     nf = uiNumericField(parent, 'Value',0, 'Step',1, 'Style','shadow')
+%     nf = CSSuiNumericField(parent, 'Value',50, 'Min',0, 'Max',100)
+%     nf = CSSuiNumericField(parent, 'Value',0, 'Step',1, 'Style','shadow')
 %     nf.ValueChangedFcn = @(s,e) fprintf('%.2f\n', e.Value);
 %
 %   PROPERTIES
 %     Value             Numeric value                           default: 0
+%     Limits            [Min Max] convenience alias             default: [-Inf Inf]
 %     Min               Minimum allowed                         default: -Inf
 %     Max               Maximum allowed                         default:  Inf
 %     Step              Step for +/- buttons (0 = hidden)       default: 0
 %     DecimalPlaces     Display precision                       default: 4
-%     Format            printf format ('' = auto)               default: ''
+%     Format            printf format string ('' = auto)        default: ''
 %     Placeholder       Hint text when empty                    default: ''
 %     Label             Adjacent text label                     default: ''
 %     LabelSide         'left' | 'right'                        default: 'left'
 %     ValueChangedFcn   @(src,evt) on Enter / blur              default: []
 %     ValueChangingFcn  @(src,evt) on every keystroke           default: []
+%
+%   CSS ELEMENT SCHEMA
+%     #css-root               Outer sizing container (CSSBase-managed)
+%       .css-label            Adjacent text label div (when Label is set)
+%       .css-control          Input surface wrapper (has bg / shadow)
+%         button#nf-dec       Decrement button (when Step > 0)
+%         input#inp           The <input type="text"> element
+%         button#nf-inc       Increment button (when Step > 0)
+%     .css-disabled           On #css-root when Enabled=false
+%
+%   CUSTOM CSS EXAMPLES
+%     nf.CSS = '.css-control { border: 2px solid #1976D2; }';
+%     nf.CSS = '.css-label   { font-style: italic; }';
+%     nf.CSS = 'input        { text-align: right; }';
 
     properties (Access = public)
         Min              = -Inf
@@ -53,7 +68,7 @@ classdef CSSuiNumericField < CSSBase
                 options.Style                          = ''
                 options.CSS              (1,:) char    = ''
                 options.CSSFile          (1,:) char    = ''
-                options.Value            (1,1) double  = 0
+                options.Value                  double  = []
                 options.Min              (1,1) double  = -Inf
                 options.Max              (1,1) double  =  Inf
                 options.Step             (1,1) double  = 0
@@ -176,7 +191,7 @@ classdef CSSuiNumericField < CSSBase
         function html = buildHTML(obj)
             labelHTML = '';
             if ~isempty(strtrim(obj.Label))
-                labelHTML = sprintf('<div class="nf-label">%s</div>', ...
+                labelHTML = sprintf('<div class="css-label">%s</div>', ...
                     CSSBase.htmlEscape(obj.Label));
             end
             if strcmp(obj.LabelSide,'right'), labelAlign='left';
@@ -202,14 +217,14 @@ classdef CSSuiNumericField < CSSBase
 
             % Global reset is provided by CSSBase infraCSS.
             % overflow:visible so focus rings aren't clipped.
-            % #uihb is the CSSBase sizing container; flex layout lives on it directly.
+            % #css-root is the CSSBase sizing container; flex layout lives on it directly.
             css = [ ...
                 'html,body{overflow:visible;}' ...
-                '#uihb{display:flex;align-items:center;' ...
+                '#css-root{display:flex;align-items:center;' ...
                 'gap:8px;padding:4px 6px;font-family:var(--font-family,inherit);}' ...
-                '.nf-label{color:var(--color,inherit);font-size:12px;font-weight:600;' ...
+                '.css-label{color:var(--color,inherit);font-size:var(--font-size,12px);font-weight:var(--font-weight,500);' ...
                 'white-space:nowrap;flex-shrink:0;text-align:' labelAlign ';user-select:none;}' ...
-                '.nf-wrap{display:flex;flex:1 1 0;min-width:0;overflow:hidden;' ...
+                '.css-control{display:flex;flex:1 1 0;min-width:0;overflow:hidden;' ...
                 'align-self:stretch;' ...
                 'border-radius:var(--border-radius,8px);' ...
                 'box-shadow:var(--inset-shadow,inset 2px 2px 5px #bcbcbc,inset -2px -2px 5px #ffffff);' ...
@@ -222,7 +237,7 @@ classdef CSSuiNumericField < CSSBase
                 'font-weight:var(--font-weight,normal);' ...
                 'cursor:var(--cursor,text);}' ...
                 stepCSS ...
-                '.uihb-disabled input,.uihb-disabled .nf-btn{' ...
+                '.css-disabled input,.css-disabled .nf-btn{' ...
                 'opacity:0.5;cursor:not-allowed;pointer-events:none;}' ...
             ];
 
@@ -292,7 +307,7 @@ classdef CSSuiNumericField < CSSBase
                 '</script>' ...
             ];
 
-            wrapHTML = ['<div class="nf-wrap css-surface">' stepHTML '</div>'];
+            wrapHTML = ['<div class="css-control css-surface">' stepHTML '</div>'];
             if strcmp(obj.LabelSide,'right')
                 body = [wrapHTML labelHTML];
             else
@@ -301,7 +316,7 @@ classdef CSSuiNumericField < CSSBase
 
             html = [ ...
                 '<!DOCTYPE html><html><head><style>' css '</style></head><body>' ...
-                '<div id="uihb">' body '</div>' ...
+                '<div id="css-root">' body '</div>' ...
                 compJS '</body></html>' ...
             ];
         end

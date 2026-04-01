@@ -1,32 +1,45 @@
 function CSSDemo()
-%CSSDEMO  Interactive demo and functional test for the CSS component library.
+%CSSDemo  Interactive demo and functional test for the CSS component library.
 %
 %   Run with:   CSSDemo()
 %
-%   The demo creates a uifigure with all seven components laid out in a grid.
+%   Creates a uifigure with all seven CSS components laid out in a grid.
 %   Each component fires callbacks that update a status label so you can
-%   verify bidirectional communication.  A row of native MATLAB controls lets
-%   you toggle enabled-state, switch presets on-the-fly, and trigger
+%   verify bidirectional communication.  Native MATLAB controls let you
+%   toggle enabled-state, switch presets on-the-fly, and trigger
 %   programmatic value changes.
 %
-%   Components demonstrated
-%   -----------------------
-%     uiButton       — click, programmatic text change
-%     uiLabel        — static text, programmatic update
-%     uiDropdown     — ValueChangedFcn, Items change, programmatic Value
-%     uiEditField    — ValueChangedFcn, ValueChangingFcn, Editable toggle
-%     uiNumericField — Min/Max/Step, ValueChangedFcn, ValueChangingFcn
-%     uiSwitch       — ValueChangedFcn, programmatic toggle
-%     uiTextArea     — ValueChangedFcn, ValueChangingFcn, Placeholder
+%   -------------------------------------------------------------------------
+%   CSS ELEMENT SCHEMA (same across all components)
+%   -------------------------------------------------------------------------
+%     #css-root       Outer sizing container (Width/Height/OuterPadding/Border)
+%     .css-control    Main interactive surface (button, input wrapper, etc.)
+%     .css-label      Adjacent text label (EditField, Dropdown, Switch, etc.)
+%     .css-icon       SVG icon element (CSSuiButton only)
+%     #cssbase-text   Live-patchable text span (button, label, switch)
+%     .css-disabled   On #css-root when Enabled=false
+%     .css-surface    Primary rendered surface — targeted by CSSPreset rules
+%     .css-clickable  Interactive surfaces — hover/active animations
+%
+%   -------------------------------------------------------------------------
+%   COMPONENTS DEMONSTRATED
+%   -------------------------------------------------------------------------
+%     CSSuiButton       click, programmatic text change, custom CSS
+%     CSSuiLabel        static text, programmatic update
+%     CSSuiDropdown     ValueChangedFcn, Items change, programmatic Value
+%     CSSuiEditField    ValueChangedFcn, ValueChangingFcn, Editable toggle
+%     CSSuiNumericField Min/Max/Step, ValueChangedFcn, ValueChangingFcn
+%     CSSuiSwitch       ValueChangedFcn, programmatic toggle
+%     CSSuiTextArea     ValueChangedFcn, ValueChangingFcn, Placeholder
 
 %% ── Figure & layout ───────────────────────────────────────────────────────
 fig = uifigure('Name','CSS Component Demo', ...
-               'Position',[100 60 900 780], ...
+               'Position',[100 60 900 820], ...
                'Color',[0.93 0.93 0.93]);
 
-gl = uigridlayout(fig, [10 3], ...
+gl = uigridlayout(fig, [11 3], ...
     'ColumnWidth', {'1x','1x','1x'}, ...
-    'RowHeight',   {28, 50, 50, 50, 50, 50, 80, 130, 28, 44}, ...
+    'RowHeight',   {28, 50, 50, 50, 50, 50, 80, 130, 50, 28, 44}, ...
     'Padding',     [14 14 14 14], ...
     'RowSpacing',  10, ...
     'ColumnSpacing',14, ...
@@ -43,43 +56,43 @@ hdr = uilabel(gl, 'Text','CSS Component Demo', ...
 hdr.Layout.Row = 1; hdr.Layout.Column = [1 3];
 
 %% ── Status label ──────────────────────────────────────────────────────────
-statusLbl = uiLabel(gl, 'Text','Status: ready', 'Style', preset);
+statusLbl = CSSuiLabel(gl, 'Text','Status: ready', 'Style', preset);
 statusLbl.Layout.Row = 2; statusLbl.Layout.Column = 3;
 
     function setStatus(msg)
         statusLbl.Text = ['Status: ' msg];
     end
 
-%% ── 1. uiButton ───────────────────────────────────────────────────────────
-btn = uiButton(gl, ...
+%% ── 1. CSSuiButton ────────────────────────────────────────────────────────
+btn = CSSuiButton(gl, ...
     'Text',            'Click Me', ...
     'Style',           preset, ...
     'ButtonPushedFcn', @(s,e) setStatus('Button clicked!'));
 btn.Layout.Row = 2; btn.Layout.Column = 1;
 
-lbl_btn = uilabel(gl,'Text','uiButton','FontWeight','bold');
+lbl_btn = uilabel(gl,'Text','CSSuiButton','FontWeight','bold');
 lbl_btn.Layout.Row = 2; lbl_btn.Layout.Column = 2;
 
-%% ── 2. uiLabel ────────────────────────────────────────────────────────────
-lbl = uiLabel(gl, 'Text','Hello, CSS!', 'Style', preset);
+%% ── 2. CSSuiLabel ─────────────────────────────────────────────────────────
+lbl = CSSuiLabel(gl, 'Text','Hello, CSS!', 'Style', preset);
 lbl.Layout.Row = 3; lbl.Layout.Column = 1;
 
-lbl_lbl = uilabel(gl,'Text','uiLabel','FontWeight','bold');
+lbl_lbl = uilabel(gl,'Text','CSSuiLabel','FontWeight','bold');
 lbl_lbl.Layout.Row = 3; lbl_lbl.Layout.Column = 2;
 
-%% ── 3. uiDropdown ─────────────────────────────────────────────────────────
-dd = uiDropdown(gl, ...
+%% ── 3. CSSuiDropdown ──────────────────────────────────────────────────────
+dd = CSSuiDropdown(gl, ...
     'Items',           {'Alpha','Beta','Gamma','Delta'}, ...
     'Label',           'Pick:', ...
     'Style',           preset, ...
     'ValueChangedFcn', @(s,e) setStatus(['Dropdown → ' e.Value]));
 dd.Layout.Row = 4; dd.Layout.Column = 1;
 
-lbl_dd = uilabel(gl,'Text','uiDropdown','FontWeight','bold');
+lbl_dd = uilabel(gl,'Text','CSSuiDropdown','FontWeight','bold');
 lbl_dd.Layout.Row = 4; lbl_dd.Layout.Column = 2;
 
-%% ── 4. uiEditField ────────────────────────────────────────────────────────
-ef = uiEditField(gl, ...
+%% ── 4. CSSuiEditField ─────────────────────────────────────────────────────
+ef = CSSuiEditField(gl, ...
     'Placeholder',     'Type something...', ...
     'Label',           'Name:', ...
     'Style',           preset, ...
@@ -87,11 +100,11 @@ ef = uiEditField(gl, ...
     'ValueChangedFcn', @(s,e) setStatus(['Edit committed: ' e.Value]));
 ef.Layout.Row = 5; ef.Layout.Column = 1;
 
-lbl_ef = uilabel(gl,'Text','uiEditField','FontWeight','bold');
+lbl_ef = uilabel(gl,'Text','CSSuiEditField','FontWeight','bold');
 lbl_ef.Layout.Row = 5; lbl_ef.Layout.Column = 2;
 
-%% ── 5. uiNumericField ─────────────────────────────────────────────────────
-nf = uiNumericField(gl, ...
+%% ── 5. CSSuiNumericField ──────────────────────────────────────────────────
+nf = CSSuiNumericField(gl, ...
     'Value',           0, ...
     'Min',            -100, ...
     'Max',             100, ...
@@ -102,22 +115,22 @@ nf = uiNumericField(gl, ...
     'ValueChangedFcn', @(s,e) setStatus(sprintf('Numeric → %.4g  (was %.4g)', e.Value, e.PreviousValue)));
 nf.Layout.Row = 6; nf.Layout.Column = 1;
 
-lbl_nf = uilabel(gl,'Text','uiNumericField','FontWeight','bold');
+lbl_nf = uilabel(gl,'Text','CSSuiNumericField','FontWeight','bold');
 lbl_nf.Layout.Row = 6; lbl_nf.Layout.Column = 2;
 
-%% ── 6. uiSwitch ───────────────────────────────────────────────────────────
-sw = uiSwitch(gl, ...
+%% ── 6. CSSuiSwitch ────────────────────────────────────────────────────────
+sw = CSSuiSwitch(gl, ...
     'Text',            'Notifications', ...
     'Value',           false, ...
     'Style',           preset, ...
     'ValueChangedFcn', @(s,e) setStatus(sprintf('Switch → %d', e.Value)));
 sw.Layout.Row = 7; sw.Layout.Column = 1;
 
-lbl_sw = uilabel(gl,'Text','uiSwitch','FontWeight','bold');
+lbl_sw = uilabel(gl,'Text','CSSuiSwitch','FontWeight','bold');
 lbl_sw.Layout.Row = 7; lbl_sw.Layout.Column = 2;
 
-%% ── 7. uiTextArea ─────────────────────────────────────────────────────────
-ta = uiTextArea(gl, ...
+%% ── 7. CSSuiTextArea ──────────────────────────────────────────────────────
+ta = CSSuiTextArea(gl, ...
     'Placeholder',     'Enter notes here...', ...
     'Label',           'Notes', ...
     'Style',           preset, ...
@@ -125,10 +138,34 @@ ta = uiTextArea(gl, ...
     'ValueChangedFcn', @(s,e) setStatus(sprintf('TextArea committed (%d chars)', numel(e.Value))));
 ta.Layout.Row = 8; ta.Layout.Column = 1;
 
-lbl_ta = uilabel(gl,'Text','uiTextArea','FontWeight','bold');
+lbl_ta = uilabel(gl,'Text','CSSuiTextArea','FontWeight','bold');
 lbl_ta.Layout.Row = 8; lbl_ta.Layout.Column = 2;
 
-%% ── Control panel (column 3) ──────────────────────────────────────────────
+%% ── 8. Custom CSS demo ────────────────────────────────────────────────────
+% Shows that .css-control / .css-label / .css-icon work identically across
+% all components — no per-component selector knowledge needed.
+cssBtn = CSSuiButton(gl, ...
+    'Text',            'Custom CSS', ...
+    'BackgroundColor', '#e8f5e9', ...
+    'BorderRadius',    '20px', ...
+    'CSS',             '.css-control { text-transform:uppercase; letter-spacing:0.08em; }');
+cssBtn.Layout.Row = 9; cssBtn.Layout.Column = 1;
+
+cssDd = CSSuiDropdown(gl, ...
+    'Items',           {'Alpha','Beta','Gamma'}, ...
+    'Label',           'Pick:', ...
+    'BackgroundColor', '#e3f2fd', ...
+    'CSS',             '.css-label { font-style:italic; font-weight:700; }');
+cssDd.Layout.Row = 9; cssDd.Layout.Column = 2;
+
+cssEf = CSSuiEditField(gl, ...
+    'Placeholder',     'Custom CSS field', ...
+    'Label',           'Input:', ...
+    'CSS',             ['.css-control { border:2px solid #1976D2; border-radius:20px; }' ...
+                        '.css-label   { color:#1976D2; font-weight:700; }']);
+cssEf.Layout.Row = 9; cssEf.Layout.Column = 3;
+
+%% ── Control panel (column 3, rows 2-8) ───────────────────────────────────
 allCSSComps = {btn, lbl, dd, ef, nf, sw, ta, statusLbl};
 
 % ── Cycle Preset ──────────────────────────────────────────────────────────
@@ -205,7 +242,7 @@ isEditable = true;
         ef.Editable = isEditable;
         ta.Editable = isEditable;
         if isEditable
-            src.Text = 'Lock Edit Fields';  setStatus('Edit fields unlocked');
+            src.Text = 'Lock Edit Fields';   setStatus('Edit fields unlocked');
         else
             src.Text = 'Unlock Edit Fields'; setStatus('Edit fields locked (read-only)');
         end
@@ -230,11 +267,11 @@ itemSet = 1;
 %% ── Footer ────────────────────────────────────────────────────────────────
 divLbl = uilabel(gl, 'Text','── Programmatic controls (native MATLAB) ──', ...
     'HorizontalAlignment','center','FontAngle','italic');
-divLbl.Layout.Row = 9; divLbl.Layout.Column = [1 3];
+divLbl.Layout.Row = 10; divLbl.Layout.Column = [1 3];
 
 footerLbl = uilabel(gl, ...
     'Text', sprintf('Preset: %s   |   All components backed by uihtml', preset), ...
     'HorizontalAlignment','center','FontSize',11,'FontColor',[0.4 0.4 0.4]);
-footerLbl.Layout.Row = 10; footerLbl.Layout.Column = [1 3];
+footerLbl.Layout.Row = 11; footerLbl.Layout.Column = [1 3];
 
 end
