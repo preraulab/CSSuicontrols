@@ -1,38 +1,38 @@
 classdef CSSuiNumericField < CSSBase
-%CSSuiNumericField  CSS-styled numeric edit field with optional step buttons, backed by uihtml.
-%
-%   USAGE
-%     nf = CSSuiNumericField(parent, 'Value',50, 'Min',0, 'Max',100)
-%     nf = CSSuiNumericField(parent, 'Value',0, 'Step',1, 'Style','shadow')
-%     nf.ValueChangedFcn = @(s,e) fprintf('%.2f\n', e.Value);
-%
-%   PROPERTIES
-%     Value             Numeric value                           default: 0
-%     Limits            [Min Max] convenience alias             default: [-Inf Inf]
-%     Min               Minimum allowed                         default: -Inf
-%     Max               Maximum allowed                         default:  Inf
-%     Step              Step for +/- buttons (0 = hidden)       default: 0
-%     DecimalPlaces     Display precision                       default: 4
-%     Format            printf format string ('' = auto)        default: ''
-%     Placeholder       Hint text when empty                    default: ''
-%     Label             Adjacent text label                     default: ''
-%     LabelSide         'left' | 'right'                        default: 'left'
-%     ValueChangedFcn   @(src,evt) on Enter / blur              default: []
-%     ValueChangingFcn  @(src,evt) on every keystroke           default: []
-%
-%   CSS ELEMENT SCHEMA
-%     #css-root               Outer sizing container (CSSBase-managed)
-%       .css-label            Adjacent text label div (when Label is set)
-%       .css-control          Input surface wrapper (has bg / shadow)
-%         button#nf-dec       Decrement button (when Step > 0)
-%         input#inp           The <input type="text"> element
-%         button#nf-inc       Increment button (when Step > 0)
-%     .css-disabled           On #css-root when Enabled=false
-%
-%   CUSTOM CSS EXAMPLES
-%     nf.CSS = '.css-control { border: 2px solid #1976D2; }';
-%     nf.CSS = '.css-label   { font-style: italic; }';
-%     nf.CSS = 'input        { text-align: right; }';
+    %CSSuiNumericField  CSS-styled numeric edit field with optional step buttons, backed by uihtml.
+    %
+    %   USAGE
+    %     nf = CSSuiNumericField(parent, 'Value',50, 'Min',0, 'Max',100)
+    %     nf = CSSuiNumericField(parent, 'Value',0, 'Step',1, 'Style','shadow')
+    %     nf.ValueChangedFcn = @(s,e) fprintf('%.2f\n', e.Value);
+    %
+    %   PROPERTIES
+    %     Value             Numeric value                           default: 0
+    %     Limits            [Min Max] convenience alias             default: [-Inf Inf]
+    %     Min               Minimum allowed                         default: -Inf
+    %     Max               Maximum allowed                         default:  Inf
+    %     Step              Step for +/- buttons (0 = hidden)       default: 0
+    %     DecimalPlaces     Display precision                       default: 4
+    %     Format            printf format string ('' = auto)        default: ''
+    %     Placeholder       Hint text when empty                    default: ''
+    %     Label             Adjacent text label                     default: ''
+    %     LabelSide         'left' | 'right'                        default: 'left'
+    %     ValueChangedFcn   @(src,evt) on Enter / blur              default: []
+    %     ValueChangingFcn  @(src,evt) on every keystroke           default: []
+    %
+    %   CSS ELEMENT SCHEMA
+    %     #css-root               Outer sizing container (CSSBase-managed)
+    %       .css-label            Adjacent text label div (when Label is set)
+    %       .css-control          Input surface wrapper (has bg / shadow)
+    %         button#nf-dec       Decrement button (when Step > 0)
+    %         input#inp           The <input type="text"> element
+    %         button#nf-inc       Increment button (when Step > 0)
+    %     .css-disabled           On #css-root when Enabled=false
+    %
+    %   CUSTOM CSS EXAMPLES
+    %     nf.CSS = '.css-control { border: 2px solid #1976D2; }';
+    %     nf.CSS = '.css-label   { font-style: italic; }';
+    %     nf.CSS = 'input        { text-align: right; }';
 
     properties (Access = public)
         Min              = -Inf
@@ -187,8 +187,11 @@ classdef CSSuiNumericField < CSSBase
 
     % =====================================================================
     methods (Access = protected)
-
+        %************************************************************
+        %                      BUILD HTML (PATCHED HEIGHT)
+        %************************************************************
         function html = buildHTML(obj)
+
             labelHTML = '';
             if ~isempty(strtrim(obj.Label))
                 labelHTML = sprintf('<div class="css-label">%s</div>', ...
@@ -199,10 +202,10 @@ classdef CSSuiNumericField < CSSBase
 
             showStep = obj.Step > 0;
             stepCSS  = '';
-            stepHTML  = '';
+
             if showStep
                 stepCSS = [ ...
-                    '.nf-btn{width:28px;flex-shrink:0;align-self:stretch;' ...
+                    '.nf-btn{width:28px;flex-shrink:0;' ...
                     'border:none;margin:0;padding:0;' ...
                     'appearance:none;-webkit-appearance:none;' ...
                     'background:var(--bg-color,#e0e0e0);color:var(--color,inherit);' ...
@@ -210,24 +213,26 @@ classdef CSSuiNumericField < CSSBase
                     'border-radius:var(--border-radius,0);' ...
                     'cursor:pointer;font-size:14px;' ...
                     'display:flex;align-items:center;justify-content:center;' ...
-                    'user-select:none;}' ...
+                    'user-select:none;' ...
+                    'align-self:center;}' ...  
                     '.nf-btn:hover{opacity:0.7;}' ...
-                ];
+                    ];
             end
 
-            % Global reset is provided by CSSBase infraCSS.
-            % overflow:visible so focus rings aren't clipped.
-            % #css-root is the CSSBase sizing container; flex layout lives on it directly.
             css = [ ...
-                '#css-root{display:flex;align-items:var(--align-items,center);' ...
-                'gap:8px;padding:4px 6px;font-family:var(--font-family,inherit);}' ...
+                '#css-root{display:flex;align-items:center;' ...
+                'gap:8px;padding:0 6px;font-family:var(--font-family,inherit);}' ...  
+
                 '.css-label{color:var(--color,inherit);font-size:var(--font-size,12px);font-weight:var(--font-weight,500);' ...
                 'white-space:nowrap;flex-shrink:0;text-align:' labelAlign ';user-select:none;}' ...
-                '.css-control{display:flex;flex:1 1 0;min-width:0;overflow:hidden;' ...
-                'align-self:stretch;' ...
+
+                '.css-control{display:flex;flex:1 1 0;min-width:0;' ...
+                'align-items:center;' ... 
+                'overflow:hidden;' ...
                 'border-radius:var(--border-radius,8px);' ...
                 'box-shadow:var(--inset-shadow,inset 2px 2px 5px #bcbcbc,inset -2px -2px 5px #ffffff);' ...
                 'background-color:var(--bg-color,#e0e0e0);}' ...
+
                 'input{flex:1;min-width:0;padding:7px 12px;border:none;outline:none;' ...
                 'color:var(--color,#5f7080);' ...
                 'background:transparent;' ...
@@ -235,18 +240,21 @@ classdef CSSuiNumericField < CSSBase
                 'font-family:var(--font-family,inherit);' ...
                 'font-weight:var(--font-weight,normal);' ...
                 'cursor:var(--cursor,text);' ...
-                'text-align:var(--text-align,left);}' ...
+                'text-align:var(--text-align,left);' ...
+                'box-sizing:border-box;}' ... 
+
                 stepCSS ...
+
                 '.css-disabled input,.css-disabled .nf-btn{' ...
                 'opacity:0.5;cursor:not-allowed;pointer-events:none;}' ...
-            ];
+                ];
 
             if showStep
                 stepHTML = [ ...
                     '<button class="nf-btn" id="nf-dec">&minus;</button>' ...
                     '%INPUT%' ...
                     '<button class="nf-btn" id="nf-inc">+</button>' ...
-                ];
+                    ];
             else
                 stepHTML = '%INPUT%';
             end
@@ -255,9 +263,9 @@ classdef CSSuiNumericField < CSSBase
                 '<input id="inp" type="text" value="%s" placeholder="%s">', ...
                 CSSBase.attrEscape(obj.formatNum(obj.Value_)), ...
                 CSSBase.attrEscape(obj.Placeholder));
+
             stepHTML = strrep(stepHTML, '%INPUT%', inputTag);
 
-            % JS: min/max/step passed as literals
             jsMin  = obj.numToJS(obj.Min);
             jsMax  = obj.numToJS(obj.Max);
             jsStep = sprintf('%.10g', obj.Step);
@@ -283,7 +291,7 @@ classdef CSSuiNumericField < CSSBase
                 'if(e.key==="Enter"){var v=clampJS(parseFloat(inp.value));' ...
                 'if(!isNaN(v))inp.value=v;' ...
                 'window.sendEvent({event:"commit",value:v});}});' ...
-            ];
+                ];
 
             if showStep
                 compJS = [compJS ...
@@ -295,7 +303,7 @@ classdef CSSuiNumericField < CSSBase
                     'inc.addEventListener("click",function(){' ...
                     'var v=clampJS((parseFloat(inp.value)||0)+_step);' ...
                     'inp.value=v;window.sendEvent({event:"commit",value:v});});' ...
-                ];
+                    ];
             end
 
             compJS = [compJS ...
@@ -305,9 +313,10 @@ classdef CSSuiNumericField < CSSBase
                 'document.getElementById("inp").value=cmd.value;}' ...
                 '};' ...
                 '</script>' ...
-            ];
+                ];
 
             wrapHTML = ['<div class="css-control css-surface">' stepHTML '</div>'];
+
             if strcmp(obj.LabelSide,'right')
                 body = [wrapHTML labelHTML];
             else
@@ -318,9 +327,8 @@ classdef CSSuiNumericField < CSSBase
                 '<!DOCTYPE html><html><head><style>' css '</style></head><body>' ...
                 '<div id="css-root">' body '</div>' ...
                 compJS '</body></html>' ...
-            ];
+                ];
         end
-
         function onMessage(obj, data)
             switch data.event
                 case 'ready'
