@@ -13,7 +13,9 @@ classdef CSSuiButton < CSSBase
     %     IconPosition      'top'|'bottom'|'left'|'right'          default: 'top'
     %     IconSize          CSS size, e.g. '18px' or '1.5em'       default: '1.2em'
     %     Shape             'rectangle'|'square'|'circle'          default: 'rectangle'
-    %                       square/circle use Width for both dimensions (default 40px)
+    %                       square/circle fill the component as the largest square that fits
+    %     IconOnlyWidth     CSS width string, e.g. '60px'          default: ''
+    %                       when set and an Icon is present, text is hidden below this width
     %     ButtonPushedFcn   @(src, evt) callback                   default: []
     %
     %   CSS ELEMENT SCHEMA
@@ -34,6 +36,7 @@ classdef CSSuiButton < CSSBase
         IconPosition    = 'top'      % 'top' | 'bottom' | 'left' | 'right'
         IconSize        = '1.2em'    % CSS size string, e.g. '18px', '1.5em', '24px'
         Shape           = 'rectangle' % 'rectangle' | 'square' | 'circle'
+        IconOnlyWidth   = ''         % CSS width threshold, e.g. '60px' — below this only icon shown
         ButtonPushedFcn = []
     end
 
@@ -53,6 +56,7 @@ classdef CSSuiButton < CSSBase
                 options.IconPosition    (1,:) char    = 'top'
                 options.IconSize        (1,:) char    = '1.2em'
                 options.Shape          (1,:) char    = 'rectangle'
+                options.IconOnlyWidth  (1,:) char    = ''
                 options.ButtonPushedFcn               = []
                 % --- CSS convenience properties (forwarded to CSSBase) ----
                 options.Color               (1,:) char = ''
@@ -98,6 +102,7 @@ classdef CSSuiButton < CSSBase
             obj.IconPosition    = options.IconPosition;
             obj.IconSize        = options.IconSize;
             obj.Shape           = options.Shape;
+            obj.IconOnlyWidth   = options.IconOnlyWidth;
 
             % Resolve icon: filepath --> SVG inner markup
             ic = options.Icon;
@@ -145,6 +150,12 @@ classdef CSSuiButton < CSSBase
         % --- Structural: IconSize ----------------------------------------
         function set.IconSize(obj, val)
             obj.IconSize = val;
+            if ~obj.Updating_ && obj.isReady(), obj.refresh(); end
+        end
+
+        % --- Structural: IconOnlyWidth -----------------------------------
+        function set.IconOnlyWidth(obj, val)
+            obj.IconOnlyWidth = val;
             if ~obj.Updating_ && obj.isReady(), obj.refresh(); end
         end
 
@@ -242,6 +253,7 @@ classdef CSSuiButton < CSSBase
                 'transform:translateY(1px);' ...
                 'box-shadow:inset 2px 2px 4px rgba(0,0,0,0.18),inset -2px -2px 4px rgba(255,255,255,0.9);' ...
                 '}' ...
+                obj.iconOnlyCSS() ...
                 ];
 
             compJS = [ ...
@@ -267,6 +279,21 @@ classdef CSSuiButton < CSSBase
                 compJS '</body></html>' ...
                 ];
         end
+        function s = iconOnlyCSS(obj)
+            % Returns a @media block that hides text below IconOnlyWidth.
+            % Only emitted when both IconOnlyWidth and Icon are non-empty.
+            if isempty(obj.IconOnlyWidth) || isempty(obj.Icon)
+                s = '';
+                return;
+            end
+            s = [ ...
+                '@media(max-width:' obj.IconOnlyWidth '){' ...
+                '#cssbase-text{display:none;}' ...
+                '.css-control{padding:var(--padding,8px);}' ...
+                '}' ...
+                ];
+        end
+
         function onMessage(obj, data)
             if strcmp(data.event, 'click') && obj.Enabled_
                 if ~isempty(obj.ButtonPushedFcn)
