@@ -1,22 +1,22 @@
 classdef CSSuiLabel < CSSBase
-%CSSuiLabel  CSS-styled text label backed by uihtml.
-%
-%   USAGE
-%     lbl = CSSuiLabel(parent, 'Text','Status:')
-%     lbl = CSSuiLabel(parent, 'Text','Title', 'Style','shadow')
-%     lbl.Text = 'Updated';        % live-patches without rebuild
-%
-%   PROPERTIES
-%     Text    Display string                                    default: 'Label'
-%
-%   CSS ELEMENT SCHEMA
-%     #css-root / .css-control    Same element — the label IS the root div.
-%       #cssbase-text             Span holding the text (live-patchable).
-%     .css-disabled               On #css-root when Enabled=false.
-%
-%   CUSTOM CSS EXAMPLES
-%     lbl.CSS = '#css-root { text-transform: uppercase; }';
-%     lbl.CSS = '#cssbase-text { text-decoration: underline; }';
+    %CSSuiLabel  CSS-styled text label backed by uihtml.
+    %
+    %   USAGE
+    %     lbl = CSSuiLabel(parent, 'Text','Status:')
+    %     lbl = CSSuiLabel(parent, 'Text','Title', 'Style','shadow')
+    %     lbl.Text = 'Updated';        % live-patches without rebuild
+    %
+    %   PROPERTIES
+    %     Text    Display string                                    default: 'Label'
+    %
+    %   CSS ELEMENT SCHEMA
+    %     #css-root / .css-control    Same element — the label IS the root div.
+    %       #cssbase-text             Span holding the text (live-patchable).
+    %     .css-disabled               On #css-root when Enabled=false.
+    %
+    %   CUSTOM CSS EXAMPLES
+    %     lbl.CSS = '#css-root { text-transform: uppercase; }';
+    %     lbl.CSS = '#cssbase-text { text-decoration: underline; }';
 
     properties (Access = public)
         Text = 'Label'
@@ -108,16 +108,20 @@ classdef CSSuiLabel < CSSBase
                 'opacity:var(--opacity,1);' ...
                 'cursor:var(--cursor,default);' ...
                 'padding:var(--padding,4px 6px);' ...
-                'user-select:none;white-space:nowrap;overflow:hidden;' ...
-                'text-overflow:ellipsis;}' ...
-            ];
+                'user-select:none;' ...
+                'white-space:normal;' ...
+                'overflow:hidden;' ...
+                'text-overflow:clip;' ...
+                'word-break:break-word;' ...
+                '}' ...
+                ];
 
             html = [ ...
                 '<!DOCTYPE html><html><head><style>' css '</style></head><body>' ...
                 '<div id="css-root" class="css-surface css-label css-control"><span id="cssbase-text">' ...
                 CSSBase.htmlEscape(obj.Text) '</span></div>' ...
                 '</body></html>' ...
-            ];
+                ];
         end
 
     end
