@@ -1,28 +1,28 @@
 classdef CSSuiSwitch < CSSBase
-%CSSuiSwitch  CSS-styled toggle switch backed by uihtml.
-%
-%   USAGE
-%     sw = CSSuiSwitch(parent, 'Text','Notifications', 'Value',true)
-%     sw = CSSuiSwitch(parent, 'Style','shadow')
-%     sw.ValueChangedFcn = @(s,e) fprintf('State: %d\n', e.Value);
-%
-%   PROPERTIES
-%     Value             Logical (true = on)                     default: false
-%     Text              Label string beside the toggle          default: 'Toggle'
-%     SwitchOnColor     Track colour when on (CSS colour str)   default: '#A2D2FF'
-%     ValueChangedFcn   @(src, evt) callback                   default: []
-%
-%   CSS ELEMENT SCHEMA
-%     #css-root               Outer sizing container (CSSBase-managed)
-%       label.css-control     Toggle track wrapper (contains the checkbox)
-%         input#chk           Hidden <input type="checkbox">
-%         span.slider         Animated thumb / track fill
-%       span.css-label#cssbase-text  Text label beside the toggle (live-patchable)
-%     .css-disabled           On #css-root when Enabled=false
-%
-%   CUSTOM CSS EXAMPLES
-%     sw.CSS = '.slider { border-radius: 4px; }';      % square toggle
-%     sw.CSS = '.css-label { font-weight: 700; }';
+    %CSSuiSwitch  CSS-styled toggle switch backed by uihtml.
+    %
+    %   USAGE
+    %     sw = CSSuiSwitch(parent, 'Text','Notifications', 'Value',true)
+    %     sw = CSSuiSwitch(parent, 'Style','shadow')
+    %     sw.ValueChangedFcn = @(s,e) fprintf('State: %d\n', e.Value);
+    %
+    %   PROPERTIES
+    %     Value             Logical (true = on)                     default: false
+    %     Text              Label string beside the toggle          default: 'Toggle'
+    %     SwitchOnColor     Track colour when on (CSS colour str)   default: '#A2D2FF'
+    %     ValueChangedFcn   @(src, evt) callback                   default: []
+    %
+    %   CSS ELEMENT SCHEMA
+    %     #css-root               Outer sizing container (CSSBase-managed)
+    %       label.css-control     Toggle track wrapper (contains the checkbox)
+    %         input#chk           Hidden <input type="checkbox">
+    %         span.slider         Animated thumb / track fill
+    %       span.css-label#cssbase-text  Text label beside the toggle (live-patchable)
+    %     .css-disabled           On #css-root when Enabled=false
+    %
+    %   CUSTOM CSS EXAMPLES
+    %     sw.CSS = '.slider { border-radius: 4px; }';      % square toggle
+    %     sw.CSS = '.css-label { font-weight: 700; }';
 
     properties (Access = public)
         Text            = 'Toggle'

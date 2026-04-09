@@ -1,31 +1,31 @@
 classdef CSSuiEditField < CSSBase
-%CSSuiEditField  CSS-styled single-line text edit field backed by uihtml.
-%
-%   USAGE
-%     ef = CSSuiEditField(parent, 'Placeholder','Enter name...')
-%     ef = CSSuiEditField(parent, 'Value','hello', 'Style','shadow')
-%     ef.ValueChangedFcn = @(s,e) disp(e.Value);
-%
-%   PROPERTIES
-%     Value             Text content                            default: ''
-%     Placeholder       Hint text when empty                    default: ''
-%     Label             Adjacent text label                     default: ''
-%     LabelSide         'left' | 'right'                        default: 'left'
-%     Editable          false = read-only                       default: true
-%     ValueChangedFcn   @(src,evt) on Enter / focus-out         default: []
-%     ValueChangingFcn  @(src,evt) on every keystroke           default: []
-%
-%   CSS ELEMENT SCHEMA
-%     #css-root               Outer sizing container (CSSBase-managed)
-%       .css-label            Adjacent text label div (when Label is set)
-%       .css-control          Input surface wrapper div (has bg / shadow)
-%         input#inp           The actual <input> element (transparent bg)
-%     .css-disabled           On #css-root when Enabled=false
-%
-%   CUSTOM CSS EXAMPLES
-%     ef.CSS = '.css-control { border: 2px solid #1976D2; }';
-%     ef.CSS = '.css-label   { font-style: italic; }';
-%     ef.CSS = 'input        { text-align: right; }';
+    %CSSuiEditField  CSS-styled single-line text edit field backed by uihtml.
+    %
+    %   USAGE
+    %     ef = CSSuiEditField(parent, 'Placeholder','Enter name...')
+    %     ef = CSSuiEditField(parent, 'Value','hello', 'Style','shadow')
+    %     ef.ValueChangedFcn = @(s,e) disp(e.Value);
+    %
+    %   PROPERTIES
+    %     Value             Text content                            default: ''
+    %     Placeholder       Hint text when empty                    default: ''
+    %     Label             Adjacent text label                     default: ''
+    %     LabelSide         'left' | 'right'                        default: 'left'
+    %     Editable          false = read-only                       default: true
+    %     ValueChangedFcn   @(src,evt) on Enter / focus-out         default: []
+    %     ValueChangingFcn  @(src,evt) on every keystroke           default: []
+    %
+    %   CSS ELEMENT SCHEMA
+    %     #css-root               Outer sizing container (CSSBase-managed)
+    %       .css-label            Adjacent text label div (when Label is set)
+    %       .css-control          Input surface wrapper div (has bg / shadow)
+    %         input#inp           The actual <input> element (transparent bg)
+    %     .css-disabled           On #css-root when Enabled=false
+    %
+    %   CUSTOM CSS EXAMPLES
+    %     ef.CSS = '.css-control { border: 2px solid #1976D2; }';
+    %     ef.CSS = '.css-label   { font-style: italic; }';
+    %     ef.CSS = 'input        { text-align: right; }';
 
     properties (Access = public)
         Placeholder      = ''

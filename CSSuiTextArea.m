@@ -1,29 +1,29 @@
 classdef CSSuiTextArea < CSSBase
-%CSSuiTextArea  CSS-styled multiline text area backed by uihtml.
-%
-%   USAGE
-%     ta = CSSuiTextArea(parent, 'Placeholder','Enter notes...')
-%     ta = CSSuiTextArea(parent, 'Value','hello', 'Style','shadow')
-%     ta.ValueChangedFcn  = @(s,e) disp(e.Value);
-%     ta.ValueChangingFcn = @(s,e) disp(e.Value);
-%
-%   PROPERTIES
-%     Value             Text content                            default: ''
-%     Placeholder       Hint text when empty                    default: ''
-%     Label             Header label (above the text area)      default: ''
-%     Editable          false = read-only                       default: true
-%     ValueChangedFcn   @(src,evt) on blur                      default: []
-%     ValueChangingFcn  @(src,evt) on every keystroke           default: []
-%
-%   CSS ELEMENT SCHEMA
-%     #css-root               Outer sizing container (CSSBase-managed)
-%       .css-label            Header label div (when Label is set)
-%       textarea#ta.css-control  The <textarea> element (IS the surface)
-%     .css-disabled           On #css-root when Enabled=false
-%
-%   CUSTOM CSS EXAMPLES
-%     ta.CSS = '.css-control { line-height: 1.6; font-family: monospace; }';
-%     ta.CSS = '.css-label   { font-weight: 700; color: #333; }';
+    %CSSuiTextArea  CSS-styled multiline text area backed by uihtml.
+    %
+    %   USAGE
+    %     ta = CSSuiTextArea(parent, 'Placeholder','Enter notes...')
+    %     ta = CSSuiTextArea(parent, 'Value','hello', 'Style','shadow')
+    %     ta.ValueChangedFcn  = @(s,e) disp(e.Value);
+    %     ta.ValueChangingFcn = @(s,e) disp(e.Value);
+    %
+    %   PROPERTIES
+    %     Value             Text content                            default: ''
+    %     Placeholder       Hint text when empty                    default: ''
+    %     Label             Header label (above the text area)      default: ''
+    %     Editable          false = read-only                       default: true
+    %     ValueChangedFcn   @(src,evt) on blur                      default: []
+    %     ValueChangingFcn  @(src,evt) on every keystroke           default: []
+    %
+    %   CSS ELEMENT SCHEMA
+    %     #css-root               Outer sizing container (CSSBase-managed)
+    %       .css-label            Header label div (when Label is set)
+    %       textarea#ta.css-control  The <textarea> element (IS the surface)
+    %     .css-disabled           On #css-root when Enabled=false
+    %
+    %   CUSTOM CSS EXAMPLES
+    %     ta.CSS = '.css-control { line-height: 1.6; font-family: monospace; }';
+    %     ta.CSS = '.css-label   { font-weight: 700; color: #333; }';
 
     properties (Access = public)
         Placeholder     = ''

@@ -1,32 +1,32 @@
 classdef CSSuiDropdown < CSSBase
-%CSSuiDropdown  CSS-styled dropdown/select component backed by uihtml.
-%
-%   USAGE
-%     dd = CSSuiDropdown(parent, 'Items',{'A','B','C'})
-%     dd = CSSuiDropdown(parent, 'Items',{'X','Y'}, 'Style','shadow')
-%     dd.ValueChangedFcn = @(s,e) disp(e.Value);
-%     dd.Value = 'B';               % live-patches without rebuild
-%
-%   PROPERTIES
-%     Items             Cell array of option strings            default: {'Option 1','Option 2'}
-%     Value             Currently selected string               default: Items{1}
-%     Label             Adjacent text label                     default: ''
-%     LabelSide         'left' | 'right'                        default: 'left'
-%     DropdownWidth     Width of just the select element        default: '' (flex fill)
-%     DropdownHeight    Height of just the select element       default: '' (auto)
-%     ValueChangedFcn   @(src, evt) callback                    default: []
-%
-%   CSS ELEMENT SCHEMA
-%     #css-root               Outer sizing container (CSSBase-managed)
-%       .css-label            Adjacent text label div (when Label is set)
-%       .css-control          Dropdown surface wrapper (has bg / shadow / arrow)
-%         select#sel          The native <select> element
-%     .css-disabled           On #css-root when Enabled=false
-%
-%   CUSTOM CSS EXAMPLES
-%     dd.CSS = '.css-control { border: 2px solid #1976D2; }';
-%     dd.CSS = '.css-label   { font-style: italic; }';
-%     dd.CSS = '.css-control::after { content: "\25B6"; }';  % swap arrow glyph
+    %CSSuiDropdown  CSS-styled dropdown/select component backed by uihtml.
+    %
+    %   USAGE
+    %     dd = CSSuiDropdown(parent, 'Items',{'A','B','C'})
+    %     dd = CSSuiDropdown(parent, 'Items',{'X','Y'}, 'Style','shadow')
+    %     dd.ValueChangedFcn = @(s,e) disp(e.Value);
+    %     dd.Value = 'B';               % live-patches without rebuild
+    %
+    %   PROPERTIES
+    %     Items             Cell array of option strings            default: {'Option 1','Option 2'}
+    %     Value             Currently selected string               default: Items{1}
+    %     Label             Adjacent text label                     default: ''
+    %     LabelSide         'left' | 'right'                        default: 'left'
+    %     DropdownWidth     Width of just the select element        default: '' (flex fill)
+    %     DropdownHeight    Height of just the select element       default: '' (auto)
+    %     ValueChangedFcn   @(src, evt) callback                    default: []
+    %
+    %   CSS ELEMENT SCHEMA
+    %     #css-root               Outer sizing container (CSSBase-managed)
+    %       .css-label            Adjacent text label div (when Label is set)
+    %       .css-control          Dropdown surface wrapper (has bg / shadow / arrow)
+    %         select#sel          The native <select> element
+    %     .css-disabled           On #css-root when Enabled=false
+    %
+    %   CUSTOM CSS EXAMPLES
+    %     dd.CSS = '.css-control { border: 2px solid #1976D2; }';
+    %     dd.CSS = '.css-label   { font-style: italic; }';
+    %     dd.CSS = '.css-control::after { content: "\25B6"; }';  % swap arrow glyph
 
     properties (Access = public)
         ValueChangedFcn = []

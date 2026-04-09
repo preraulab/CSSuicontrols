@@ -1,45 +1,45 @@
 classdef CSSPreset
-%CSSPreset  Named CSS style presets for CSSBase components.
-%
-%   A CSSPreset is a pure data container — it holds convenience property
-%   values and a raw CSS string.  It has no behaviour beyond static factory
-%   methods.  Pass it to any CSSBase component via the 'Style' argument.
-%
-%   USAGE
-%     btn = CSSuiButton(parent, 'Style', 'shadow');          % by name
-%     btn = CSSuiButton(parent, 'Style', CSSPreset.shadow()); % by object
-%
-%     % Customise a preset before applying:
-%     p = CSSPreset.flat();
-%     p.Color = '#2a7a2a';
-%     btn = CSSuiButton(parent, 'Style', p);
-%
-%     % Change preset after construction:
-%     btn.setStyle('neon');
-%
-%   AVAILABLE PRESETS
-%     CSSPreset.shadow()  — Neumorphic raised-shadow (default for buttons/labels)
-%     CSSPreset.flat()    — Clean flat modern style
-%     CSSPreset.glass()   — Frosted-glass / glassmorphism style
-%     CSSPreset.neon()    — Cyberpunk dark with glowing cyan borders
-%     CSSPreset.pill()    — Rounded pill with solid purple accent
-%     CSSPreset.dark()    — Dark-mode flat (VS Code style)
-%     CSSPreset.list()    — Cell array of preset names
-%
-%   HOW PRESETS WORK
-%   A preset sets convenience properties (Color, BackgroundColor, …) and
-%   appends a CSS string that targets the standard element schema:
-%
-%     .css-surface    — primary rendered surface (button, input wrapper, etc.)
-%     .css-clickable  — interactive elements; adds hover/active animations
-%     .css-label      — adjacent text label (EditField, Dropdown, etc.)
-%
-%   These class names are stable across all components, so a single preset
-%   CSS string styles every component type consistently.
-%
-%   UTILITIES
-%     CSSPreset.scaleShadow(shadow, factor)   scale shadow px/em values
-%     CSSPreset.invertShadow(shadow)          flip outset → inset shadow
+    %CSSPreset  Named CSS style presets for CSSBase components.
+    %
+    %   A CSSPreset is a pure data container — it holds convenience property
+    %   values and a raw CSS string.  It has no behaviour beyond static factory
+    %   methods.  Pass it to any CSSBase component via the 'Style' argument.
+    %
+    %   USAGE
+    %     btn = CSSuiButton(parent, 'Style', 'shadow');          % by name
+    %     btn = CSSuiButton(parent, 'Style', CSSPreset.shadow()); % by object
+    %
+    %     % Customise a preset before applying:
+    %     p = CSSPreset.flat();
+    %     p.Color = '#2a7a2a';
+    %     btn = CSSuiButton(parent, 'Style', p);
+    %
+    %     % Change preset after construction:
+    %     btn.setStyle('neon');
+    %
+    %   AVAILABLE PRESETS
+    %     CSSPreset.shadow()  — Neumorphic raised-shadow (default for buttons/labels)
+    %     CSSPreset.flat()    — Clean flat modern style
+    %     CSSPreset.glass()   — Frosted-glass / glassmorphism style
+    %     CSSPreset.neon()    — Cyberpunk dark with glowing cyan borders
+    %     CSSPreset.pill()    — Rounded pill with solid purple accent
+    %     CSSPreset.dark()    — Dark-mode flat (VS Code style)
+    %     CSSPreset.list()    — Cell array of preset names
+    %
+    %   HOW PRESETS WORK
+    %   A preset sets convenience properties (Color, BackgroundColor, …) and
+    %   appends a CSS string that targets the standard element schema:
+    %
+    %     .css-surface    — primary rendered surface (button, input wrapper, etc.)
+    %     .css-clickable  — interactive elements; adds hover/active animations
+    %     .css-label      — adjacent text label (EditField, Dropdown, etc.)
+    %
+    %   These class names are stable across all components, so a single preset
+    %   CSS string styles every component type consistently.
+    %
+    %   UTILITIES
+    %     CSSPreset.scaleShadow(shadow, factor)   scale shadow px/em values
+    %     CSSPreset.invertShadow(shadow)          flip outset → inset shadow
 
     % =====================================================================
     %  Properties — same names as CSSBase convenience properties + CSS
