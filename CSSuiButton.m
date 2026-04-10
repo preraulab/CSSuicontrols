@@ -4,12 +4,20 @@ classdef CSSuiButton < CSSBase
     %   USAGE
     %     btn = CSSuiButton(parent)
     %     btn = CSSuiButton(parent, 'Text','Save', 'Icon','icon.svg', 'Style','flat')
+    %     btn = CSSuiButton(parent, 'Text','Go',   'Icon','anim.gif')
+    %     btn = CSSuiButton(parent, 'Text','Next', 'Icon','M5 12h14M12 5l7 7-7 7')
     %     btn.Text = 'Updated';          % live patch — no page reload
     %     btn.BackgroundColor = '#e8f5e9';
     %
     %   PROPERTIES
     %     Text              Button label string                     default: 'Button'
-    %     Icon              SVG inner-markup string or .svg path    default: ''
+    %     Icon              One of:
+    %                         • SVG inner-markup string  e.g. '<path d="M5 12h14"/>'
+    %                         • SVG path data string     e.g. 'M5 12h14M12 5l7 7-7 7'
+    %                         • Path to .svg file        (inlined as markup)
+    %                         • Path to raster file      (.png .jpg .jpeg .gif .webp .bmp .ico)
+    %                         • Base64 data URI          'data:image/...;base64,...'
+    %                       default: ''
     %     IconPosition      'top'|'bottom'|'left'|'right'          default: 'top'
     %     IconSize          CSS size, e.g. '18px' or '1.5em'       default: '1.2em'
     %     Shape             'rectangle'|'square'|'circle'          default: 'rectangle'
@@ -22,21 +30,21 @@ classdef CSSuiButton < CSSBase
     %     #css-root           Outer sizing container (CSSBase-managed)
     %     .css-control        The <button> element
     %       #cssbase-text     Span holding the button text (live-patchable)
-    %       .css-icon         SVG icon element (when Icon is set)
+    %       .css-icon         SVG or <img> icon element (when Icon is set)
     %     .css-disabled       On #css-root when Enabled=false
     %
     %   CUSTOM CSS EXAMPLES
     %     btn.CSS = '.css-control { text-transform: uppercase; letter-spacing: 0.1em; }';
-    %     btn.CSS = '.css-icon   { fill: #E53935; }';
+    %     btn.CSS = '.css-icon   { fill: #E53935; }';   % only affects inline SVG icons
     %     btn.CSS = '.css-control.css-clickable:hover { transform: none !important; }';
 
     properties (Access = public)
         Text            = 'Button'
         Icon            = ''
-        IconPosition    = 'top'      % 'top' | 'bottom' | 'left' | 'right'
-        IconSize        = '1.2em'    % CSS size string, e.g. '18px', '1.5em', '24px'
+        IconPosition    = 'top'       % 'top' | 'bottom' | 'left' | 'right'
+        IconSize        = '1.2em'     % CSS size string, e.g. '18px', '1.5em', '24px'
         Shape           = 'rectangle' % 'rectangle' | 'square' | 'circle'
-        IconOnlyWidth   = ''         % CSS width threshold, e.g. '60px' — below this only icon shown
+        IconOnlyWidth   = ''          % CSS width threshold — below this only icon shown
         ButtonPushedFcn = []
     end
 
@@ -55,8 +63,8 @@ classdef CSSuiButton < CSSBase
                 options.Icon            (1,:) char    = ''
                 options.IconPosition    (1,:) char    = 'top'
                 options.IconSize        (1,:) char    = '1.2em'
-                options.Shape          (1,:) char    = 'rectangle'
-                options.IconOnlyWidth  (1,:) char    = ''
+                options.Shape           (1,:) char    = 'rectangle'
+                options.IconOnlyWidth   (1,:) char    = ''
                 options.ButtonPushedFcn               = []
                 % --- CSS convenience properties (forwarded to CSSBase) ----
                 options.Color               (1,:) char = ''
@@ -103,15 +111,7 @@ classdef CSSuiButton < CSSBase
             obj.IconSize        = options.IconSize;
             obj.Shape           = options.Shape;
             obj.IconOnlyWidth   = options.IconOnlyWidth;
-
-            % Resolve icon: filepath --> SVG inner markup
-            ic = options.Icon;
-            if ~isempty(ic) && isfile(ic)
-                raw = fileread(ic);
-                ic  = regexprep(raw, '(?si)^.*?<svg[^>]*>(.*)</svg>.*$', '$1');
-                ic  = strtrim(ic);
-            end
-            obj.Icon = ic;
+            obj.Icon            = CSSuiButton.resolveIcon(options.Icon);
 
             obj.endInit();
         end
@@ -130,7 +130,7 @@ classdef CSSuiButton < CSSBase
 
         % --- Structural: Icon --------------------------------------------
         function set.Icon(obj, val)
-            obj.Icon = val;
+            obj.Icon = CSSuiButton.resolveIcon(val);
             if ~obj.Updating_ && obj.isReady(), obj.refresh(); end
         end
 
@@ -142,9 +142,7 @@ classdef CSSuiButton < CSSBase
                     'IconPosition must be one of: top, bottom, left, right');
             end
             obj.IconPosition = val;
-            if ~obj.Updating_ && obj.isReady()
-                obj.refresh();
-            end
+            if ~obj.Updating_ && obj.isReady(), obj.refresh(); end
         end
 
         % --- Structural: IconSize ----------------------------------------
@@ -175,22 +173,14 @@ classdef CSSuiButton < CSSBase
     methods (Access = protected)
 
         function html = buildHTML(obj)
-            iconHTML = '';
-            if ~isempty(obj.Icon)
-                sz = obj.IconSize;
-                if isempty(sz), sz = '1.2em'; end
-                iconHTML = sprintf( ...
-                    ['<svg viewBox="0 0 24 24" class="css-icon" style="width:%s;' ...
-                    'height:%s;fill:currentColor;flex-shrink:0;">%s</svg>'], ...
-                    sz, sz, obj.Icon);
-            end
+            iconHTML = obj.buildIconHTML();
 
             % Determine flex direction
             switch obj.IconPosition
-                case 'left',  flexDir = 'row';
-                case 'right', flexDir = 'row-reverse';
-                case 'top',   flexDir = 'column';
-                case 'bottom',flexDir = 'column-reverse';
+                case 'left',   flexDir = 'row';
+                case 'right',  flexDir = 'row-reverse';
+                case 'top',    flexDir = 'column';
+                case 'bottom', flexDir = 'column-reverse';
             end
 
             % Shape-specific CSS:
@@ -204,9 +194,6 @@ classdef CSSuiButton < CSSBase
                     shapeRadiusCSS = '';
                     shapeJS        = '';
                 case {'square','circle'}
-                    % flex:none lets JS control both dimensions freely.
-                    % _fit() runs once on load (inside componentSetup, after
-                    % layout is settled) and again on every window resize.
                     controlSize  = 'flex:none;';
                     rootAlignCSS = '#css-root{align-items:center;justify-content:center;}';
                     if strcmp(obj.Shape, 'circle')
@@ -226,15 +213,6 @@ classdef CSSuiButton < CSSBase
                         ];
             end
 
-            % For rectangle shape, lock #css-root to always stretch so the
-            % button fills its cell height regardless of VerticalAlignment.
-            % VerticalAlignment/HorizontalAlignment then control content
-            % placement *within* the button via align-items/justify-content
-            % on .css-control.
-            %   --text-align  stores 'left'|'center'|'right' — valid for
-            %                 both CSS text-align AND flex justify-content.
-            %   --align-items stores 'flex-start'|'center'|'flex-end'
-            %                 (already translated by the VerticalAlignment setter).
             if strcmp(obj.Shape, 'rectangle')
                 rootAlignCSS = '#css-root{align-items:stretch;}';
             end
@@ -295,9 +273,50 @@ classdef CSSuiButton < CSSBase
                 compJS '</body></html>' ...
                 ];
         end
+
+        % -----------------------------------------------------------------
+        function html = buildIconHTML(obj)
+            %buildIconHTML  Emit the correct HTML element for whatever Icon holds.
+            %
+            %   Icon storage format (set by resolveIcon):
+            %     ''                  — no icon
+            %     'data:...'          — raster base64 data URI  → <img>
+            %     '<...'  or contains '<'  — raw SVG inner markup  → <svg>
+            %     anything else       — treated as SVG path data  → <svg><path>
+
+            html = '';
+            ic   = obj.Icon;
+            if isempty(ic), return; end
+
+            sz = obj.IconSize;
+            if isempty(sz), sz = '1.2em'; end
+
+            baseImgStyle = ['width:' sz ';height:' sz ';flex-shrink:0;object-fit:contain;'];
+            baseSvgStyle = ['width:' sz ';height:' sz ';fill:currentColor;flex-shrink:0;'];
+
+            if strncmp(ic, 'data:', 5)
+                % ── Raster / animated image embedded as base64 data URI ──
+                html = sprintf( ...
+                    '<img src="%s" class="css-icon" style="%s" alt="">', ...
+                    ic, baseImgStyle);
+
+            elseif contains(ic, '<')
+                % ── Raw SVG inner markup (may include <path>, <circle>, etc.) ──
+                html = sprintf( ...
+                    '<svg viewBox="0 0 24 24" class="css-icon" style="%s">%s</svg>', ...
+                    baseSvgStyle, ic);
+
+            else
+                % ── Plain SVG path-data string, e.g. 'M5 12h14M12 5l7 7-7 7' ──
+                html = sprintf( ...
+                    '<svg viewBox="0 0 24 24" class="css-icon" style="%s"><path d="%s"/></svg>', ...
+                    baseSvgStyle, ic);
+            end
+        end
+
+        % -----------------------------------------------------------------
         function s = iconOnlyCSS(obj)
-            % Returns a @media block that hides text below IconOnlyWidth.
-            % Only emitted when both IconOnlyWidth and Icon are non-empty.
+            %iconOnlyCSS  @media block that hides text below IconOnlyWidth.
             if isempty(obj.IconOnlyWidth) || isempty(obj.Icon)
                 s = '';
                 return;
@@ -310,16 +329,95 @@ classdef CSSuiButton < CSSBase
                 ];
         end
 
+        % -----------------------------------------------------------------
         function onMessage(obj, data)
-            if strcmp(data.event, 'click') & obj.Enabled_
+            if strcmp(data.event, 'click') && obj.Enabled_
                 if ~isempty(obj.ButtonPushedFcn)
                     try
                         obj.ButtonPushedFcn(obj, ...
                             struct('Source', obj, 'EventName', 'ButtonPushed'));
                     catch ME
-                        warning('uiButton:callbackError', '%s', ME.message);
+                        warning('CSSuiButton:callbackError', '%s', ME.message);
                     end
                 end
+            end
+        end
+
+    end
+
+    % =====================================================================
+    methods (Static, Access = private)
+
+        function ic = resolveIcon(raw)
+            %resolveIcon  Normalise any icon input to a canonical storage string.
+            %
+            %   Input                         Stored as
+            %   ──────────────────────────    ──────────────────────────────────
+            %   ''                            ''
+            %   'data:...'  (already a URI)   unchanged
+            %   path to .svg file             SVG inner markup (tags stripped)
+            %   path to raster file           'data:<mime>;base64,<b64>'
+            %   string containing '<'         treated as raw SVG markup, unchanged
+            %   any other string              treated as SVG path data, unchanged
+
+            ic = raw;
+            if isempty(ic), return; end
+
+            % Already a data URI — nothing to do.
+            if strncmp(ic, 'data:', 5), return; end
+
+            % File path?
+            if isfile(ic)
+                [~, ~, ext] = fileparts(ic);
+                ext = lower(ext);
+
+                if strcmp(ext, '.svg')
+                    % Inline the SVG: strip outer <svg>…</svg> wrapper,
+                    % keep only the inner markup so we control viewBox/size.
+                    raw_text = fileread(ic);
+                    ic = regexprep(raw_text, ...
+                        '(?si)^.*?<svg[^>]*>(.*)</svg>.*$', '$1');
+                    ic = strtrim(ic);
+                    return;
+                end
+
+                % Raster / animated formats → base64 data URI.
+                mime = CSSuiButton.extToMime(ext);
+                fid  = fopen(ic, 'rb');
+                if fid == -1
+                    warning('CSSuiButton:iconReadError', ...
+                        'Cannot open icon file: %s', ic);
+                    ic = '';
+                    return;
+                end
+                bytes = fread(fid, '*uint8');
+                fclose(fid);
+                b64 = matlab.net.base64encode(bytes);
+                ic  = ['data:' mime ';base64,' b64];
+                return;
+            end
+
+            % Not a file path — treat as inline SVG markup or path data;
+            % leave unchanged (buildIconHTML distinguishes via '<').
+        end
+
+        % -----------------------------------------------------------------
+        function mime = extToMime(ext)
+            %extToMime  Map a lowercase file extension to a MIME type string.
+            switch ext
+                case '.gif',             mime = 'image/gif';
+                case {'.jpg','.jpeg'},   mime = 'image/jpeg';
+                case '.png',             mime = 'image/png';
+                case '.webp',            mime = 'image/webp';
+                case '.bmp',             mime = 'image/bmp';
+                case '.ico',             mime = 'image/x-icon';
+                case '.tiff',            mime = 'image/tiff';
+                case '.avif',            mime = 'image/avif';
+                case '.svg',             mime = 'image/svg+xml';  % fallback only
+                otherwise
+                    warning('CSSuiButton:unknownMime', ...
+                        'Unknown icon extension "%s", using application/octet-stream', ext);
+                    mime = 'application/octet-stream';
             end
         end
 
