@@ -331,7 +331,7 @@ classdef CSSuiButton < CSSBase
 
         % -----------------------------------------------------------------
         function onMessage(obj, data)
-            if strcmp(data.event, 'click') && obj.Enabled_
+            if strcmp(data.event, 'click') & obj.Enabled_
                 if ~isempty(obj.ButtonPushedFcn)
                     try
                         obj.ButtonPushedFcn(obj, ...
