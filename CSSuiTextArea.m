@@ -12,8 +12,20 @@ classdef CSSuiTextArea < CSSBase
     %     Placeholder       Hint text when empty                    default: ''
     %     Label             Header label (above the text area)      default: ''
     %     Editable          false = read-only                       default: true
-    %     ValueChangedFcn   @(src,evt) on blur                      default: []
-    %     ValueChangingFcn  @(src,evt) on every keystroke           default: []
+    %     Scroll            Show scrollbar when text overflows      default: false
+    %     ValueChangedFcn   @(src,evt) called on blur               default: []
+    %     ValueChangingFcn  @(src,evt) called on every keystroke    default: []
+    %
+    %   CONVENIENCE METHODS
+    %     ta.add(str)       Append str to the current value (no newline)
+    %     ta.addnl(str)     Append a newline then str to the current value
+    %
+    %   MULTILINE NOTES
+    %     Use sprintf or newline() to embed line breaks in Value:
+    %       ta.Value = sprintf('Line 1\nLine 2\nLine 3');
+    %       ta.addnl('another line');
+    %     Newlines typed by the user are returned correctly in ValueChangedFcn
+    %     and ValueChangingFcn callbacks via e.Value.
     %
     %   CSS ELEMENT SCHEMA
     %     #css-root               Outer sizing container (CSSBase-managed)
@@ -26,10 +38,11 @@ classdef CSSuiTextArea < CSSBase
     %     ta.CSS = '.css-label   { font-weight: 700; color: #333; }';
 
     properties (Access = public)
-        Placeholder     = ''
-        Label           = ''
-        Editable        = true
-        ValueChangedFcn = []
+        Placeholder      = ''
+        Label            = ''
+        Editable         = true
+        Scroll           = false
+        ValueChangedFcn  = []
         ValueChangingFcn = []
     end
 
@@ -57,6 +70,7 @@ classdef CSSuiTextArea < CSSBase
                 options.Placeholder     (1,:) char    = ''
                 options.Label           (1,:) char    = ''
                 options.Editable        (1,1) logical = true
+                options.Scroll          (1,1) logical = false
                 options.ValueChangedFcn               = []
                 options.ValueChangingFcn              = []
                 % --- CSS convenience properties (forwarded to CSSBase) ----
@@ -103,6 +117,7 @@ classdef CSSuiTextArea < CSSBase
             obj.Placeholder      = options.Placeholder;
             obj.Label            = options.Label;
             obj.Editable         = options.Editable;
+            obj.Scroll           = options.Scroll;
             obj.ValueChangedFcn  = options.ValueChangedFcn;
             obj.ValueChangingFcn = options.ValueChangingFcn;
 
@@ -115,8 +130,19 @@ classdef CSSuiTextArea < CSSBase
             obj.Value_     = val;
             obj.CommitVal_ = val;
             if ~obj.Updating_ && obj.Loaded_
-                obj.pushCmd(struct('cmd','setValue','value',val));
+                obj.pushCmd(struct('cmd','setValue','value', CSSuiTextArea.encodeNewlines(val)));
             end
+        end
+
+        % --- Convenience append methods ----------------------------------
+        function add(obj, val)
+            %ADD  Append val to the current Value with no separator.
+            obj.Value = [obj.Value, val];
+        end
+
+        function addnl(obj, val)
+            %ADDNL  Append a newline then val to the current Value.
+            obj.Value = [obj.Value, newline, val];
         end
 
         % --- Structural properties ---------------------------------------
@@ -132,6 +158,10 @@ classdef CSSuiTextArea < CSSBase
             obj.Editable = val;
             if ~obj.Updating_ && obj.isReady(), obj.refresh(); end
         end
+        function set.Scroll(obj, val)
+            obj.Scroll = val;
+            if ~obj.Updating_ && obj.isReady(), obj.refresh(); end
+        end
     end
 
     % =====================================================================
@@ -141,6 +171,18 @@ classdef CSSuiTextArea < CSSBase
             roAttr = '';
             if ~obj.Editable, roAttr = ' readonly'; end
 
+            % overflow-y: auto shows a scrollbar only when content overflows;
+            % hidden (default) clips silently and lets the textarea grow via
+            % the user's own typing (native behaviour).
+            if obj.Scroll
+                overflowCSS = 'overflow-y:auto;';
+                % Also enable the system scrollbar (CSSBase globally hides it).
+                scrollbarCSS = '#ta::-webkit-scrollbar{display:block;width:6px;}#ta::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.25);border-radius:3px;}';
+            else
+                overflowCSS  = 'overflow-y:hidden;';
+                scrollbarCSS = '';
+            end
+
             labelHTML = '';
             if ~isempty(strtrim(obj.Label))
                 labelHTML = sprintf( ...
@@ -148,15 +190,15 @@ classdef CSSuiTextArea < CSSBase
                     CSSBase.htmlEscape(obj.Label));
             end
 
-            % Global reset and html/body base are provided by CSSBase infraCSS.
             css = [ ...
                 'html,body{display:flex;flex-direction:column;}' ...
                 '#css-root{display:flex;flex-direction:column;width:100%;height:100%;' ...
                 'gap:4px;padding:4px 6px;}' ...
-                '.css-label{color:var(--color,inherit);font-size:var(--font-size,12px);font-weight:var(--font-weight,500);' ...
-                'white-space:nowrap;user-select:none;flex-shrink:0;' ...
-                'font-family:var(--font-family,inherit);}' ...
+                '.css-label{color:var(--color,inherit);font-size:var(--font-size,12px);' ...
+                'font-weight:var(--font-weight,500);white-space:nowrap;user-select:none;' ...
+                'flex-shrink:0;font-family:var(--font-family,inherit);}' ...
                 '.css-control{flex:1;width:100%;resize:none;border:none;outline:none;' ...
+                overflowCSS ...
                 'color:var(--color,inherit);' ...
                 'background-color:var(--bg-color,#e0e0e0);' ...
                 'font-size:var(--font-size,12px);' ...
@@ -170,8 +212,18 @@ classdef CSSuiTextArea < CSSBase
                 'text-align:var(--text-align,left);}' ...
                 '.css-control:read-only{cursor:default;opacity:0.7;}' ...
                 '.css-disabled .css-control{opacity:0.5;cursor:not-allowed;pointer-events:none;}' ...
+                scrollbarCSS ...
             ];
 
+            % NOTE on newline encoding:
+            %   The uihtml Data bridge serialises MATLAB structs to JSON.
+            %   A real newline (char 10) becomes the JSON token \n, which JS
+            %   receives as the two-char literal backslash-n — NOT a newline.
+            %   encodeNewlines() pre-converts real newlines to the two-char
+            %   literal '\n' so they arrive in JS as backslash-n, and the JS
+            %   split('\n').join('\n') then restores them to real newlines.
+            %   The reverse path (JS→MATLAB) needs no treatment: textarea
+            %   values come through the JSON bridge already correctly decoded.
             compJS = [ ...
                 '<script>' ...
                 'window.componentSetup=function(hc){' ...
@@ -182,7 +234,10 @@ classdef CSSuiTextArea < CSSBase
                 'window.sendEvent({event:"commit",value:ta.value});});' ...
                 '};' ...
                 'window.onCommand=function(cmd){' ...
-                'if(cmd.cmd==="setValue")document.getElementById("ta").value=cmd.value;' ...
+                'if(cmd.cmd==="setValue"){' ...
+                '  var v=cmd.value.split("\\n").join("\n");' ...
+                '  document.getElementById("ta").value=v;' ...
+                '}' ...
                 '};' ...
                 '</script>' ...
             ];
@@ -191,8 +246,9 @@ classdef CSSuiTextArea < CSSBase
                 '<!DOCTYPE html><html><head><style>' css '</style></head><body>' ...
                 '<div id="css-root">' ...
                 labelHTML ...
-                '<textarea id="ta" class="css-surface css-control" placeholder="' CSSBase.attrEscape(obj.Placeholder) '"' ...
-                roAttr '>' CSSBase.htmlEscape(obj.Value_) '</textarea>' ...
+                '<textarea id="ta" class="css-surface css-control"' ...
+                ' placeholder="' CSSBase.attrEscape(obj.Placeholder) '"' ...
+                roAttr '>' CSSuiTextArea.htmlEscapeTA(obj.Value_) '</textarea>' ...
                 '</div>' ...
                 compJS '</body></html>' ...
             ];
@@ -202,7 +258,8 @@ classdef CSSuiTextArea < CSSBase
             switch data.event
                 case 'ready'
                     if ~isempty(obj.Value_)
-                        obj.pushCmd(struct('cmd','setValue','value',obj.Value_));
+                        obj.pushCmd(struct('cmd','setValue','value', ...
+                            CSSuiTextArea.encodeNewlines(obj.Value_)));
                     end
                 case 'input'
                     if obj.Enabled_
@@ -225,6 +282,38 @@ classdef CSSuiTextArea < CSSBase
                         end
                     end
             end
+        end
+
+    end
+
+    % =====================================================================
+    methods (Static, Access = private)
+
+        function s = htmlEscapeTA(s)
+            %HTMLESCAPETA  Like CSSBase.htmlEscape but also encodes CR/LF as
+            %   &#10; so the CEF browser cannot drop or collapse them when
+            %   parsing the textarea's initial HTML content.
+            s = strrep(s, '&',           '&amp;');
+            s = strrep(s, '<',           '&lt;');
+            s = strrep(s, '>',           '&gt;');
+            s = strrep(s, sprintf('\r\n'),'&#10;');
+            s = strrep(s, sprintf('\r'),  '&#10;');
+            s = strrep(s, newline,        '&#10;');
+        end
+
+        function s = encodeNewlines(s)
+            %ENCODENEWLINES  Replace real newlines with the two-character
+            %   literal sentinel '\n' (backslash + n) so they survive the
+            %   MATLAB struct → JSON → JS bridge.
+            %
+            %   The uihtml JSON bridge encodes a real newline (char 10) as the
+            %   JSON token \n, which JS receives as backslash-n — not a newline.
+            %   Pre-encoding to the literal two chars '\n' makes them arrive as
+            %   backslash-n in JS, where split('\n').join('\n') converts them
+            %   back to real newlines.  Order: CRLF first to avoid double-encoding.
+            s = strrep(s, sprintf('\r\n'), '\n');
+            s = strrep(s, sprintf('\r'),   '\n');
+            s = strrep(s, newline,         '\n');
         end
 
     end
