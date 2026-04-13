@@ -43,6 +43,7 @@ classdef CSSuiTextArea < CSSBase
         Editable         = true
         Scroll           = false
         WordWrap         = true   % false = no line wrapping (enables horizontal scroll)
+        MaxLines         = 5000   % max lines kept in buffer (0 = unlimited)
         ValueChangedFcn  = []
         ValueChangingFcn = []
     end
@@ -52,8 +53,9 @@ classdef CSSuiTextArea < CSSBase
     end
 
     properties (Access = protected)
-        Value_     = ''
-        CommitVal_ = ''
+        Value_      = ''
+        CommitVal_  = ''
+        LineCount_  = 0    % running newline count; avoids splitting on every add()
     end
 
     % =====================================================================
@@ -133,6 +135,7 @@ classdef CSSuiTextArea < CSSBase
         function set.Value(obj, val)
             obj.Value_     = val;
             obj.CommitVal_ = val;
+            obj.LineCount_ = 0;   % reset line counter on full replace
             if ~obj.Updating_ && obj.Loaded_
                 obj.pushCmd(struct('cmd','setValue','value', CSSuiTextArea.encodeNewlines(val)));
             end
@@ -141,12 +144,33 @@ classdef CSSuiTextArea < CSSBase
         % --- Convenience append methods ----------------------------------
         function add(obj, val)
             %ADD  Append val to the current Value with no separator.
-            obj.Value = [obj.Value, val];
+            %   Sends only the new text across the bridge (appendText command)
+            %   rather than the full accumulated string, keeping bridge
+            %   payload O(1) per call regardless of log length.
+            %   When MaxLines > 0, trims oldest lines once the buffer is full
+            %   and does a one-time full resync to the JS textarea.
+            obj.Value_     = [obj.Value_ val];
+            obj.LineCount_ = obj.LineCount_ + sum(val == newline);
+
+            if obj.MaxLines > 0 && obj.LineCount_ > obj.MaxLines
+                % Trim to last MaxLines lines and resync JS with full setValue.
+                lines          = strsplit(obj.Value_, newline, 'CollapseDelimiters', false);
+                lines          = lines(end - obj.MaxLines + 1 : end);
+                obj.Value_     = strjoin(lines, newline);
+                obj.LineCount_ = obj.MaxLines;
+                if ~obj.Updating_ && obj.Loaded_
+                    obj.pushCmd(struct('cmd','setValue', ...
+                        'value', CSSuiTextArea.encodeNewlines(obj.Value_)));
+                end
+            elseif ~obj.Updating_ && obj.Loaded_
+                obj.pushCmd(struct('cmd','appendText', ...
+                    'value', CSSuiTextArea.encodeNewlines(val)));
+            end
         end
 
         function addnl(obj, val)
             %ADDNL  Append a newline then val to the current Value.
-            obj.Value = [obj.Value, newline, val];
+            obj.add([newline val]);
         end
 
         % --- Structural properties ---------------------------------------
@@ -261,6 +285,10 @@ classdef CSSuiTextArea < CSSBase
                 'var ta=document.getElementById("ta");' ...
                 'if(cmd.cmd==="setValue"){' ...
                 '  ta.value=cmd.value.split("\\n").join("\n");' ...
+                '  if(_autoScroll)ta.scrollTop=ta.scrollHeight;' ...
+                '}' ...
+                'if(cmd.cmd==="appendText"){' ...
+                '  ta.value+=cmd.value.split("\\n").join("\n");' ...
                 '  if(_autoScroll)ta.scrollTop=ta.scrollHeight;' ...
                 '}' ...
                 'if(cmd.cmd==="scrollBottom"){' ...
