@@ -42,6 +42,7 @@ classdef CSSuiTextArea < CSSBase
         Label            = ''
         Editable         = true
         Scroll           = false
+        WordWrap         = true   % false = no line wrapping (enables horizontal scroll)
         ValueChangedFcn  = []
         ValueChangingFcn = []
     end
@@ -71,6 +72,7 @@ classdef CSSuiTextArea < CSSBase
                 options.Label           (1,:) char    = ''
                 options.Editable        (1,1) logical = true
                 options.Scroll          (1,1) logical = false
+                options.WordWrap        (1,1) logical = true
                 options.ValueChangedFcn               = []
                 options.ValueChangingFcn              = []
                 % --- CSS convenience properties (forwarded to CSSBase) ----
@@ -118,6 +120,7 @@ classdef CSSuiTextArea < CSSBase
             obj.Label            = options.Label;
             obj.Editable         = options.Editable;
             obj.Scroll           = options.Scroll;
+            obj.WordWrap         = options.WordWrap;
             obj.ValueChangedFcn  = options.ValueChangedFcn;
             obj.ValueChangingFcn = options.ValueChangingFcn;
 
@@ -162,6 +165,17 @@ classdef CSSuiTextArea < CSSBase
             obj.Scroll = val;
             if ~obj.Updating_ && obj.isReady(), obj.refresh(); end
         end
+        function set.WordWrap(obj, val)
+            obj.WordWrap = val;
+            if ~obj.Updating_ && obj.isReady(), obj.refresh(); end
+        end
+
+        function scrollToBottom(obj)
+            %SCROLLTOBOTTOM  Programmatically scroll the text area to the end.
+            if obj.Loaded_
+                obj.pushCmd(struct('cmd','scrollBottom'));
+            end
+        end
     end
 
     % =====================================================================
@@ -176,11 +190,15 @@ classdef CSSuiTextArea < CSSBase
             % the user's own typing (native behaviour).
             if obj.Scroll
                 overflowCSS = 'overflow-y:auto;';
-                % Also enable the system scrollbar (CSSBase globally hides it).
                 scrollbarCSS = '#ta::-webkit-scrollbar{display:block;width:6px;}#ta::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.25);border-radius:3px;}';
             else
                 overflowCSS  = 'overflow-y:hidden;';
                 scrollbarCSS = '';
+            end
+            if ~obj.WordWrap
+                wrapCSS = 'white-space:pre;overflow-x:auto;';
+            else
+                wrapCSS = '';
             end
 
             labelHTML = '';
@@ -199,6 +217,7 @@ classdef CSSuiTextArea < CSSBase
                 'flex-shrink:0;font-family:var(--font-family,inherit);}' ...
                 '.css-control{flex:1;width:100%;resize:none;border:none;outline:none;' ...
                 overflowCSS ...
+                wrapCSS ...
                 'color:var(--color,inherit);' ...
                 'background-color:var(--bg-color,#e0e0e0);' ...
                 'font-size:var(--font-size,12px);' ...
@@ -224,8 +243,12 @@ classdef CSSuiTextArea < CSSBase
             %   split('\n').join('\n') then restores them to real newlines.
             %   The reverse path (JS→MATLAB) needs no treatment: textarea
             %   values come through the JSON bridge already correctly decoded.
+            autoScrollFlag = 'false';
+            if obj.Scroll, autoScrollFlag = 'true'; end
+
             compJS = [ ...
                 '<script>' ...
+                'var _autoScroll=' autoScrollFlag ';' ...
                 'window.componentSetup=function(hc){' ...
                 'var ta=document.getElementById("ta");' ...
                 'ta.addEventListener("input",function(){' ...
@@ -234,9 +257,13 @@ classdef CSSuiTextArea < CSSBase
                 'window.sendEvent({event:"commit",value:ta.value});});' ...
                 '};' ...
                 'window.onCommand=function(cmd){' ...
+                'var ta=document.getElementById("ta");' ...
                 'if(cmd.cmd==="setValue"){' ...
-                '  var v=cmd.value.split("\\n").join("\n");' ...
-                '  document.getElementById("ta").value=v;' ...
+                '  ta.value=cmd.value.split("\\n").join("\n");' ...
+                '  if(_autoScroll)ta.scrollTop=ta.scrollHeight;' ...
+                '}' ...
+                'if(cmd.cmd==="scrollBottom"){' ...
+                '  ta.scrollTop=ta.scrollHeight;' ...
                 '}' ...
                 '};' ...
                 '</script>' ...

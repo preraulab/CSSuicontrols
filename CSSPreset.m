@@ -69,7 +69,7 @@ classdef CSSPreset
             %SHADOW  Neumorphic raised-shadow preset.
             p = CSSPreset();
             p.Color           = '#414c57';
-            p.BackgroundColor = '';      % transparent — components use their own bg defaults
+            p.BackgroundColor = '';      % transparent — components use their own bg defaults (#e0e0e0)
             p.FontFamily      = '"Segoe UI",system-ui,sans-serif';
             p.FontSize        = '12px';
             p.BorderRadius    = '8px';
@@ -82,7 +82,7 @@ classdef CSSPreset
             p.OuterPadding = '8px';
 
             p.CSS = [ ...
-                '.css-surface{border:none;transition:box-shadow 0.15s ease,transform 0.15s ease;' ...
+                '.css-surface{border:none;transition:box-shadow 0.15s ease,transform 0.15s ease;}' ...
                 '.css-label{box-shadow:none!important;background-color:transparent!important;}' ...
                 '.css-clickable{cursor:pointer;user-select:none;}' ...
                 '.css-clickable:hover{transform:translateY(-2px);' ...
@@ -239,9 +239,37 @@ classdef CSSPreset
             ];
         end
 
+        function p = shadow_light()
+            %SHADOW_LIGHT  Neumorphic preset on a near-white base.
+            %   Same shadow language as 'shadow' but lighter background — suited
+            %   for input fields, dropdowns, text areas, and list boxes.
+            p = CSSPreset();
+            p.Color           = '#5f7080';
+            p.BackgroundColor = '#ffffff';
+            p.FontFamily      = '"Segoe UI",system-ui,sans-serif';
+            p.FontSize        = '12px';
+            p.BorderRadius    = '8px';
+
+            % Raised shadow (used on wrappers that need a lifted look)
+            p.BoxShadow   = '3px 3px 6px rgba(0,0,0,0.15),-3px -3px 6px rgba(255,255,255,0.9)';
+            % Carved-in shadow for inputs, dropdowns, textareas
+            p.InsetShadow = 'inset 2px 2px 5px #bcbcbc,inset -2px -2px 5px #ffffff';
+            p.OuterPadding = '8px';
+
+            p.CSS = [ ...
+                '.css-surface{border:none;transition:box-shadow 0.15s ease,transform 0.15s ease;}' ...
+                '.css-label{box-shadow:none!important;background-color:transparent!important;}' ...
+                '.css-clickable{cursor:pointer;user-select:none;}' ...
+                '.css-clickable:hover{transform:translateY(-2px);' ...
+                'box-shadow:4px 4px 8px rgba(0,0,0,0.18),-4px -4px 8px rgba(255,255,255,0.9);}' ...
+                '.css-clickable:active{transform:translateY(1px);' ...
+                'box-shadow:inset 2px 2px 4px rgba(0,0,0,0.18),inset -2px -2px 4px rgba(255,255,255,0.9);}' ...
+            ];
+        end
+
         function names = list()
             %LIST  Cell array of available preset names.
-            names = {'shadow', 'flat', 'glass', 'neon', 'pill', 'dark'};
+            names = {'shadow', 'shadow_light', 'flat', 'glass', 'neon', 'pill', 'dark'};
         end
 
     end
