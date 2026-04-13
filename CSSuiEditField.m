@@ -90,6 +90,7 @@ classdef CSSuiEditField < CSSBase
                 options.Height              (1,:) char = ''
                 options.OuterPadding        (1,:) char = ''
                 options.Border              (1,:) char = ''
+                options.AspectRatio         (1,:) char = ''
             end
 
             if isempty(parent), parent = uifigure('Name','CSSuiEditField'); end

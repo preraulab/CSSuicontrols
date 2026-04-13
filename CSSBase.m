@@ -54,13 +54,13 @@ classdef (Abstract) CSSBase < handle
     %     obj.CSS = '.css-disabled { opacity: 0.3; }';
     %
     %     % Suppress the default hover lift on a button:
-    %     btn.CSS = '.css-control.css-clickable:hover { transform: none !important; }';
+    %     btn.CSS = '.css-control.css-clickable:hover { transform: none; }';
     %
-    %   NOTE: obj.CSS is injected into <style id="cssbase-user"> which sits
-    %   BEFORE the component's own <style> in the cascade.  At equal specificity
-    %   the component default wins.  Use CSS variables (convenience properties)
-    %   to reliably change appearance, or match/exceed component specificity /
-    %   use !important for structural overrides.
+    %   obj.CSS is injected into <style id="cssbase-override">, which is placed
+    %   AFTER the component's own <style> in the document.  User CSS therefore
+    %   wins at equal specificity — no !important needed for most overrides.
+    %   Preset CSS (from the Style argument) is also in this block, but placed
+    %   before obj.CSS so user rules always take priority over the preset.
     %
     %   -----------------------------------------------------------------------
     %   CSS VARIABLE MAP  (convenience properties → :root custom props)
@@ -87,6 +87,7 @@ classdef (Abstract) CSSBase < handle
     %     Height              → --height
     %     OuterPadding        → --outer-padding
     %     Border              → --border
+    %     AspectRatio         → --aspect-ratio
     %     MinWidth            → --min-width
     %     MinHeight           → --min-height
     %     MaxWidth            → --max-width
@@ -104,10 +105,11 @@ classdef (Abstract) CSSBase < handle
     %   -----------------------------------------------------------------------
     %   CASCADE ORDER  (lowest → highest priority)
     %   -----------------------------------------------------------------------
-    %     1.  CSSFile  <link>                (external theme)
-    %     2.  infraCSS  <style>              (#css-root sizing, .css-disabled)
-    %     3.  <style id="cssbase-user">      (:root vars + obj.CSS string)
-    %     4.  Component  <style>             (internal component defaults)
+    %     1.  CSSFile  <link>                  (external theme)
+    %     2.  infraCSS  <style>                (#css-root sizing, .css-disabled)
+    %     3.  <style id="cssbase-vars">        (:root custom property variables)
+    %     4.  Component  <style>               (internal component defaults)
+    %     5.  <style id="cssbase-override">    (preset CSS, then obj.CSS)
     %
     %   -----------------------------------------------------------------------
     %   SUBCLASS CONTRACT
@@ -128,7 +130,8 @@ classdef (Abstract) CSSBase < handle
     %   -----------------------------------------------------------------------
     %   MATLAB → JS:   obj.pushCmd(struct('cmd','...', ...))
     %     'setEnabled'   toggle .css-disabled on #css-root
-    %     'setCSS'       replace <style id="cssbase-user"> content
+    %     'setCSS'       update cssbase-vars (.vars) and cssbase-override (.override)
+    %     'setVar'       set a single CSS custom property on :root
     %     'setText'      patch #cssbase-text textContent
     %     'batch'        struct with .commands cell-array, dispatched in order
     %     (other)        forwarded to  window.onCommand(cmd)
@@ -213,6 +216,7 @@ classdef (Abstract) CSSBase < handle
     properties (Access = private)
         TempFile_  = ''
         CmdQueue_  = {}              % pre-load command buffer
+        PresetCSS_ = ''              % raw CSS string from the applied preset
     end
 
     % ======================================================================
@@ -274,7 +278,7 @@ classdef (Abstract) CSSBase < handle
                 batchCmd.cmd      = 'batch';
                 batchCmd.commands = { ...
                     struct('cmd','setEnabled','value',obj.Enabled_), ...
-                    struct('cmd','setCSS','content',obj.buildFullCSS()) ...
+                    struct('cmd','setCSS','vars',obj.buildVarCSS(),'override',obj.buildOverrideCSS()) ...
                     };
                 obj.HTMLComponent.Data = batchCmd;
             else
@@ -309,7 +313,8 @@ classdef (Abstract) CSSBase < handle
             obj.CSS = val;
             if ~obj.Updating_
                 if obj.Loaded_ && obj.isReady()
-                    obj.pushCmd(struct('cmd', 'setCSS', 'content', obj.buildFullCSS()));
+                    obj.pushCmd(struct('cmd','setCSS', ...
+                        'vars',obj.buildVarCSS(),'override',obj.buildOverrideCSS()));
                 elseif obj.isReady()
                     obj.refresh();
                 end
@@ -504,7 +509,7 @@ classdef (Abstract) CSSBase < handle
                 'FontStyle','LetterSpacing','LineHeight','TextTransform','TextDecoration', ...
                 'HorizontalAlignment','VerticalAlignment','BorderRadius','BoxShadow', ...
                 'InsetShadow','Opacity','Cursor','Padding','MinWidth','MinHeight', ...
-                'MaxWidth','MaxHeight','Width','Height','OuterPadding','Border'};
+                'MaxWidth','MaxHeight','Width','Height','OuterPadding','Border','AspectRatio'};
             for i = 1:numel(props)
                 p = props{i};
                 if isfield(options, p) && ~isempty(options.(p))
@@ -522,7 +527,8 @@ classdef (Abstract) CSSBase < handle
 
             if ~obj.isReady(), return; end
 
-            cmd = struct('cmd', 'setCSS', 'content', obj.buildFullCSS());
+            cmd = struct('cmd','setCSS', ...
+                'vars',obj.buildVarCSS(),'override',obj.buildOverrideCSS());
 
             if obj.Loaded_
                 obj.HTMLComponent.Data = cmd;
@@ -536,6 +542,14 @@ classdef (Abstract) CSSBase < handle
                     obj.CmdQueue_{end+1} = cmd;
                 end
             end
+        end
+
+        function pushVar(obj, name, val)
+            %PUSHVAR  Live-push a single CSS custom property to the document root.
+            %   More efficient than a full CSS rebuild when only one variable changes.
+            %   name  — CSS custom property name, e.g. '--my-color'
+            %   val   — CSS value string, e.g. '#ff0000'
+            obj.pushCmd(struct('cmd','setVar','name',name,'value',val));
         end
 
     end
@@ -568,12 +582,13 @@ classdef (Abstract) CSSBase < handle
         function flushQueue(obj)
             if isempty(obj.HTMLComponent) || ~isvalid(obj.HTMLComponent), return; end
 
-            % Always append a fresh setCSS as the LAST command (Fix 2).
+            % Always append a fresh setCSS as the LAST command.
             % When the tab was in the background, CEF may have throttled or
             % dropped earlier setCSS pushes.  Appending one here guarantees
             % the correct CSS is applied the moment the component goes live,
             % regardless of what was (or wasn't) processed before ready fired.
-            cssCmd  = struct('cmd', 'setCSS', 'content', obj.buildFullCSS());
+            cssCmd  = struct('cmd','setCSS', ...
+                'vars',obj.buildVarCSS(),'override',obj.buildOverrideCSS());
             allCmds = [obj.CmdQueue_ {cssCmd}];
 
             if numel(allCmds) == 1
@@ -618,7 +633,12 @@ classdef (Abstract) CSSBase < handle
             fn = properties(preset);
             for i = 1:numel(fn)
                 val = preset.(fn{i});
-                if ~isempty(val) && isprop(obj, fn{i})
+                if isempty(val), continue; end
+                if strcmp(fn{i}, 'CSS')
+                    % Preset CSS is stored separately so user obj.CSS always
+                    % takes priority — they are combined in buildOverrideCSS().
+                    obj.PresetCSS_ = val;
+                elseif isprop(obj, fn{i})
                     obj.(fn{i}) = val;
                 end
             end
@@ -653,6 +673,7 @@ classdef (Abstract) CSSBase < handle
             %                  control how it occupies the MATLAB component area.
             %                  Defaults to 100% × 100% with no padding so existing
             %                  components are visually unchanged unless overridden.
+            %                  No align-items here — each component sets its own.
             %   .css-disabled — opacity:0.5, box-shadow:none, pointer-events:none on all children.
             infraCSS = [ ...
                 '*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}' ...
@@ -671,7 +692,6 @@ classdef (Abstract) CSSBase < handle
                 'aspect-ratio:var(--aspect-ratio,none);' ...
                 'border:var(--border,none);' ...
                 'display:flex;' ...
-                'align-items:var(--align-items,stretch);' ...
                 'text-align:var(--text-align,inherit);' ...
                 '}' ...
                 '.css-disabled{pointer-events:none!important;opacity:0.5;}' ...
@@ -679,15 +699,25 @@ classdef (Abstract) CSSBase < handle
                 '.css-error .css-control{border:2px solid #e53935!important;border-radius:var(--border-radius,8px)!important;}' ...
                 ];
 
-            % <style id="cssbase-user"> holds :root{vars} + obj.CSS together
-            % so the JS setCSS command can update both atomically without a
-            % page reload.  infraCSS is fixed and lives in its own style tag.
-            userCSSContent = obj.buildFullCSS();
+            % cssbase-vars holds :root{custom props} — injected early so all
+            % component CSS can reference them via var(...).
+            % cssbase-override holds preset CSS + obj.CSS — injected AFTER the
+            % component's own <style> so user rules win at equal specificity.
             headInject = [headInject ...
                 '<style>' infraCSS '</style>' ...
-                '<style id="cssbase-user">' userCSSContent '</style>'];
+                '<style id="cssbase-vars">' obj.buildVarCSS() '</style>'];
 
             html = regexprep(html, '(?i)(<head>)', ['$1' headInject]);
+
+            % Inject override block immediately before </head>, after component CSS.
+            overrideTag = ['<style id="cssbase-override">' obj.buildOverrideCSS() '</style>'];
+            k = regexpi(html, '</head>');
+            if ~isempty(k)
+                html = [html(1:k(1)-1) overrideTag html(k(1):end)];
+            else
+                warning('CSSBase:noHeadClose', 'No </head> tag — cssbase-override appended before </body>.');
+                html = regexprep(html, '(?i)(</body>)', [overrideTag '$1']);
+            end
 
             % --- 3. Inject JS bridge (before </body>) --------------------
             html = CSSBase.injectBridge(html, obj.Enabled_, obj.IsError_);
@@ -706,17 +736,20 @@ classdef (Abstract) CSSBase < handle
             end
         end
 
-        function s = buildFullCSS(obj)
-            %BUILDFULLCSS  Build complete dynamic CSS: :root vars + user CSS.
-            %   This is the canonical content for <style id="cssbase-user">.
-            %   It is used both during initial HTML assembly and whenever any
-            %   property changes to push an up-to-date setCSS command.
+        function s = buildVarCSS(obj)
+            %BUILDVARCSS  Build the :root{} custom-property block for cssbase-vars.
             varBlock = obj.buildVarBlock();
             if ~isempty(varBlock)
-                s = [':root{' varBlock '}' obj.CSS];
+                s = [':root{' varBlock '}'];
             else
-                s = obj.CSS;
+                s = '';
             end
+        end
+
+        function s = buildOverrideCSS(obj)
+            %BUILDOVERRIDECSS  Build the override block for cssbase-override.
+            %   Preset CSS comes first so user obj.CSS wins at equal specificity.
+            s = [obj.PresetCSS_ obj.CSS];
         end
 
         function validateTempDir(~, d)
@@ -797,8 +830,10 @@ classdef (Abstract) CSSBase < handle
                 'case"setVar":' ...
                 'document.documentElement.style.setProperty(cmd.name,cmd.value);break;' ...
                 'case"setCSS":' ...
-                'var _su=document.getElementById("cssbase-user");' ...
-                'if(_su)_su.textContent=cmd.content;break;' ...
+                'var _sv=document.getElementById("cssbase-vars");' ...
+                'if(_sv)_sv.textContent=cmd.vars||"";' ...
+                'var _so=document.getElementById("cssbase-override");' ...
+                'if(_so)_so.textContent=cmd.override||"";break;' ...
                 'case"batch":' ...
                 'var c=cmd.commands;' ...
                 'for(var i=0;i<c.length;i++)dispatch(c[i]);break;' ...
