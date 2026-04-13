@@ -14,13 +14,18 @@ classdef CSSuiTable < CSSBase
     %     SelectionType         'row' | 'cell' | 'none'                    default: 'row'
     %     Selection             Selected row indices (row mode) or
     %                           [row col] pairs (cell mode)                default: []
-    %     SelectionChangedFcn   @(src, evt) callback                       default: []
+    %     SelectionChangedFcn   @(src, evt) callback on single click         default: []
+    %     DoubleClickFcn        @(src, evt) callback on double click         default: []
     %     RowStriping           logical — alternate row shading             default: true
     %
     %   EVENT STRUCT (SelectionChangedFcn)
     %     .Source               this CSSuiTable object
     %     .Selection            row indices (row mode) or Nx2 matrix (cell mode)
     %     .PreviousSelection    previous selection
+    %
+    %   EVENT STRUCT (DoubleClickFcn)
+    %     .Source               this CSSuiTable object
+    %     .Row                  1-based row index that was double-clicked
     %
     %   CSS ELEMENT SCHEMA
     %     #css-root               Outer sizing container (CSSBase-managed)
@@ -40,6 +45,7 @@ classdef CSSuiTable < CSSBase
 
     properties (Access = public)
         SelectionChangedFcn = []
+        DoubleClickFcn      = []
         SelectionType       = 'row'   % 'row' | 'cell' | 'none'
         RowStriping         = true
     end
@@ -75,6 +81,7 @@ classdef CSSuiTable < CSSBase
                 options.SelectionType   (1,:) char    = 'row'
                 options.Selection                     = []
                 options.SelectionChangedFcn           = []
+                options.DoubleClickFcn                = []
                 options.RowStriping     (1,1) logical = true
                 % --- CSS convenience properties (forwarded to CSSBase) ----
                 options.Color               (1,:) char = ''
@@ -116,6 +123,7 @@ classdef CSSuiTable < CSSBase
 
             obj.applyCSSOptions(options);
             obj.SelectionChangedFcn = options.SelectionChangedFcn;
+            obj.DoubleClickFcn      = options.DoubleClickFcn;
             obj.SelectionType       = options.SelectionType;
             obj.RowStriping         = options.RowStriping;
             obj.Data_               = options.Data;
@@ -310,6 +318,10 @@ classdef CSSuiTable < CSSBase
                 '}' ...
                 'window.sendEvent({event:"change",selection:_getSelection()});' ...
                 '});' ...
+                'row.addEventListener("dblclick",function(){' ...
+                'if(document.getElementById("css-root").classList.contains("css-disabled"))return;' ...
+                'window.sendEvent({event:"dblclick",row:parseInt(row.getAttribute("data-row"))});' ...
+                '});' ...
                 '});' ...
                 '}' ...
                 'window.componentSetup=function(hc){' ...
@@ -413,6 +425,15 @@ classdef CSSuiTable < CSSBase
                             catch ME
                                 warning('CSSuiTable:callbackError','%s',ME.message);
                             end
+                        end
+                    end
+                case 'dblclick'
+                    if obj.Enabled_ && ~isempty(obj.DoubleClickFcn)
+                        evt = struct('Source', obj, 'Row', data.row);
+                        try
+                            obj.DoubleClickFcn(obj, evt);
+                        catch ME
+                            warning('CSSuiTable:dblclickError','%s',ME.message);
                         end
                     end
             end

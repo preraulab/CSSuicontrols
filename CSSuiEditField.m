@@ -120,7 +120,13 @@ classdef CSSuiEditField < CSSBase
             obj.Value_     = val;
             obj.CommitVal_ = val;
             if ~obj.Updating_ && obj.Loaded_
-                obj.pushCmd(struct('cmd','setValue','value',val));
+                % Batch setValue + setError in one Data assignment to avoid the
+                % uihtml rapid-write race: two successive HTMLComponent.Data
+                % writes both fire DataChanged but JS reads only the last value.
+                bCmd.cmd      = 'batch';
+                bCmd.commands = { struct('cmd','setValue','value',val), ...
+                                  struct('cmd','setError','value',obj.IsError_) };
+                obj.pushCmd(bCmd);
             end
         end
 
@@ -235,8 +241,14 @@ classdef CSSuiEditField < CSSBase
                     end
                 case 'commit'
                     if obj.Enabled_
+                        % Guard against stale blur-commits that arrive after a
+                        % programmatic set.Value() call.  Value_ tracks the JS
+                        % content via 'input' events and set.Value; if data.value
+                        % no longer matches we discard the commit.
+                        if ~isequal(data.value, obj.Value_)
+                            return
+                        end
                         oldVal         = obj.CommitVal_;
-                        obj.Value_     = data.value;
                         obj.CommitVal_ = data.value;
                         if ~isempty(obj.ValueChangedFcn)
                             evt = struct('Source',obj,'Value',data.value,'PreviousValue',oldVal);
