@@ -198,7 +198,7 @@ runBtn.Layout.Row = 8; runBtn.Layout.Column = 3;
         spb.N = 10;
         spb.start();
         for k = 1:spb.N
-            pause(1 + 0.2*rand);
+            pause(0.8 + 0.4*rand);
             spb.updateIteration(k);
         end
     end
