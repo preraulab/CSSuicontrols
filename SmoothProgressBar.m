@@ -5,6 +5,9 @@ classdef SmoothProgressBar < CSSUIProgressBar
     %   interpolates bar position between iteration updates, a colormap
     %   drives the fill colour, and an EMA estimates time remaining.
     %
+    %   During the first iteration (before timing data is available) the bar
+    %   pulses via sinusoidal opacity changes driven by the same timer.
+    %
     % USAGE:
     %   pb = SmoothProgressBar(parent)          % set N later via pb.N = 10
     %   pb = SmoothProgressBar(parent, N)       % positional N
@@ -113,6 +116,11 @@ classdef SmoothProgressBar < CSSUIProgressBar
             for k = 1:2:numel(spbPairs)
                 obj.(spbPairs{k}) = spbPairs{k+1};
             end
+
+            % Inject CSS so the bar fill can have its opacity controlled via
+            % the --bar-opacity custom property.  Timer-driven sinusoidal
+            % changes to this variable produce the pre-timing pulse effect.
+            obj.CSS = ['.css-bar{opacity:var(--bar-opacity,1);}' obj.CSS];
         end
 
         function delete(obj)
@@ -131,11 +139,13 @@ classdef SmoothProgressBar < CSSUIProgressBar
             obj.IsFinal_      = false;
             obj.LastPct_      = 0;
 
+            initPct = 100 / max(obj.N, 1);
             batch.cmd      = 'batch';
             batch.commands = { ...
                 struct('cmd','setVar','name','--transition-duration','value',sprintf('%.3fs',obj.TimerPeriod)), ...
-                struct('cmd','setVar','name','--color',        'value',''), ...
-                struct('cmd','setVar','name','--progress-pct', 'value','0.0000%'), ...
+                struct('cmd','setVar','name','--bar-opacity',        'value','1'), ...
+                struct('cmd','setVar','name','--color',              'value',''), ...
+                struct('cmd','setVar','name','--progress-pct',       'value',sprintf('%.4f%%',initPct)), ...
                 struct('cmd','setText','value',obj.buildLabel_(0,'--:--')) ...
             };
             obj.pushCmd(batch);
@@ -173,8 +183,9 @@ classdef SmoothProgressBar < CSSUIProgressBar
             cmap = obj.colormap_();
             batch.cmd      = 'batch';
             batch.commands = { ...
-                struct('cmd','setVar','name','--color',        'value',obj.hex_(cmap(end,:))), ...
-                struct('cmd','setVar','name','--progress-pct', 'value','100.0000%'), ...
+                struct('cmd','setVar','name','--bar-opacity',    'value','1'), ...
+                struct('cmd','setVar','name','--color',          'value',obj.hex_(cmap(end,:))), ...
+                struct('cmd','setVar','name','--progress-pct',   'value','100.0000%'), ...
                 struct('cmd','setText','value',obj.buildLabel_(100,'00:00')) ...
             };
             obj.pushCmd(batch);
@@ -192,8 +203,9 @@ classdef SmoothProgressBar < CSSUIProgressBar
             obj.LastPct_      = 0;
             batch.cmd      = 'batch';
             batch.commands = { ...
-                struct('cmd','setVar','name','--color',        'value',''), ...
-                struct('cmd','setVar','name','--progress-pct', 'value','0.0000%'), ...
+                struct('cmd','setVar','name','--bar-opacity',    'value','1'), ...
+                struct('cmd','setVar','name','--color',          'value',''), ...
+                struct('cmd','setVar','name','--progress-pct',   'value','0.0000%'), ...
                 struct('cmd','setText','value',obj.buildLabel_(0,'--:--')) ...
             };
             obj.pushCmd(batch);
@@ -208,29 +220,39 @@ classdef SmoothProgressBar < CSSUIProgressBar
         function tick_(obj)
             if ~isvalid(obj) || isempty(obj.StartTime_), return; end
 
-            [pct, trem] = obj.estimateProgress_();
-            obj.LastPct_ = pct;
+            if isempty(obj.AvgIterTime_)
+                % No timing data yet — pulse the fill opacity sinusoidally
+                % so the user sees activity while waiting for the first
+                % iteration to complete.
+                t        = toc(obj.StartTime_);
+                opacity  = sprintf('%.3f', 0.55 + 0.45*cos(2*pi * t / 1.1));
+                pulsePct = 100 * max(obj.Current_, 1) / max(obj.N, 1);
+                batch.cmd      = 'batch';
+                batch.commands = { ...
+                    struct('cmd','setVar','name','--bar-opacity',  'value',opacity), ...
+                    struct('cmd','setVar','name','--progress-pct', 'value',sprintf('%.4f%%',pulsePct)), ...
+                    struct('cmd','setText','value',obj.buildLabel_(0,'--:--')) ...
+                };
+                obj.pushCmd(batch);
+            else
+                % Timing known — restore full opacity and drive smooth progress.
+                [pct, trem] = obj.estimateProgress_();
+                pct          = max(pct, obj.LastPct_);   % enforce monotonicity
+                obj.LastPct_ = pct;
+                cmap     = obj.colormap_();
+                idx      = max(1, round((pct/100) * size(cmap,1)));
+                batch.cmd      = 'batch';
+                batch.commands = { ...
+                    struct('cmd','setVar','name','--bar-opacity',  'value','1'), ...
+                    struct('cmd','setVar','name','--color',        'value',obj.hex_(cmap(idx,:))), ...
+                    struct('cmd','setVar','name','--progress-pct', 'value',sprintf('%.4f%%',pct)), ...
+                    struct('cmd','setText','value',obj.buildLabel_(pct,trem)) ...
+                };
+                obj.pushCmd(batch);
 
-            cmap     = obj.colormap_();
-            idx      = max(1, round((pct/100) * size(cmap,1)));
-            colorHex = obj.hex_(cmap(idx,:));
-            progStr  = sprintf('%.4f%%', pct);
-            labelStr = obj.buildLabel_(pct, trem);
-
-            % Batch all three updates into one Data write.
-            % Setting Color/Value/Text individually causes three separate
-            % HTMLComponent.Data assignments; MATLAB coalesces them before
-            % drawnow so only the last (setText) would reach the JS.
-            batch.cmd      = 'batch';
-            batch.commands = { ...
-                struct('cmd','setVar','name','--color',        'value',colorHex), ...
-                struct('cmd','setVar','name','--progress-pct', 'value',progStr),  ...
-                struct('cmd','setText','value',labelStr) ...
-            };
-            obj.pushCmd(batch);
-
-            if obj.Current_ >= obj.N && obj.N > 0 && ~obj.IsFinal_
-                obj.complete();
+                if obj.Current_ >= obj.N && obj.N > 0 && ~obj.IsFinal_
+                    obj.complete();
+                end
             end
         end
 
