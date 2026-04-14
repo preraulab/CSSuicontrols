@@ -582,14 +582,21 @@ classdef (Abstract) CSSBase < handle
         function flushQueue(obj)
             if isempty(obj.HTMLComponent) || ~isvalid(obj.HTMLComponent), return; end
 
-            % Always append a fresh setCSS as the LAST command.
-            % When the tab was in the background, CEF may have throttled or
-            % dropped earlier setCSS pushes.  Appending one here guarantees
-            % the correct CSS is applied the moment the component goes live,
-            % regardless of what was (or wasn't) processed before ready fired.
-            cssCmd  = struct('cmd','setCSS', ...
+            % Ensure a fresh setCSS is the LAST command.  When the tab was
+            % in the background, CEF may have throttled or dropped earlier
+            % setCSS pushes, so the queue must end with an up-to-date one.
+            % If the queue already ends with a setCSS (common: pushFullCSS
+            % coalesces repeated var changes into a single trailing setCSS),
+            % overwrite it in place rather than appending a duplicate.
+            cssCmd = struct('cmd','setCSS', ...
                 'vars',obj.buildVarCSS(),'override',obj.buildOverrideCSS());
-            allCmds = [obj.CmdQueue_ {cssCmd}];
+            if ~isempty(obj.CmdQueue_) && isfield(obj.CmdQueue_{end}, 'cmd') ...
+                    && strcmp(obj.CmdQueue_{end}.cmd, 'setCSS')
+                obj.CmdQueue_{end} = cssCmd;
+                allCmds = obj.CmdQueue_;
+            else
+                allCmds = [obj.CmdQueue_ {cssCmd}];
+            end
 
             if numel(allCmds) == 1
                 obj.HTMLComponent.Data = allCmds{1};
