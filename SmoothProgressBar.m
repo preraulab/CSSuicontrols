@@ -135,8 +135,8 @@ classdef SmoothProgressBar < CSSUIProgressBar
 
             obj.Current_      = 0;
             obj.AvgIterTime_  = [];
-            obj.LastIterTime_ = [];
             obj.StartTime_    = tic;
+            obj.LastIterTime_ = obj.StartTime_;
             obj.IsFinal_      = false;
             obj.Running_      = true;
 
