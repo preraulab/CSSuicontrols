@@ -1,10 +1,14 @@
+---
+hide-toc: false
+---
+
 # CSSuicontrols
 
 ```{include} ../README.md
 :start-line: 1
 ```
 
-## API Reference
+## Reference
 
 ```{toctree}
 :maxdepth: 2
