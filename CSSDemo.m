@@ -32,7 +32,6 @@
 %   See also: CSSBase, CSSPreset, CSSuiButton, CSSuiLabel, CSSuiDropdown, CSSuiEditField, CSSuiNumericField, CSSuiSwitch, CSSuiTextArea
 %
 %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
-%        Source: https://github.com/preraulab/labcode_main
 
 function CSSDemo()
 

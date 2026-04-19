@@ -37,7 +37,6 @@ classdef CSSuiButton < CSSBase
     %   See also: CSSBase, CSSPreset, CSSuiLabel, CSSuiDropdown
     %
     %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
-    %        Source: https://github.com/preraulab/labcode_main
 
     properties (Access = public)
         Text            = 'Button'

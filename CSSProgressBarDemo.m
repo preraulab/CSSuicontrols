@@ -18,7 +18,6 @@
 %   See also: CSSUIProgressBar, SmoothProgressBar, CSSBase
 %
 %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
-%        Source: https://github.com/preraulab/labcode_main
 
 function CSSProgressBarDemo()
 

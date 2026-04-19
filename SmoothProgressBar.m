@@ -46,7 +46,6 @@ classdef SmoothProgressBar < CSSUIProgressBar
     %   See also: CSSUIProgressBar, CSSBase, CSSProgressBarDemo
     %
     %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
-    %        Source: https://github.com/preraulab/labcode_main
     %
     %   pb.start();
     %   for k = 1:10

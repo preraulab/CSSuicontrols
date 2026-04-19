@@ -35,7 +35,6 @@ classdef CSSPreset
     %   See also: CSSBase, CSSuiButton, CSSuiDropdown, CSSuiEditField, CSSuiSwitch
     %
     %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
-    %        Source: https://github.com/preraulab/labcode_main
 
     % =====================================================================
     %  Properties — same names as CSSBase convenience properties + CSS

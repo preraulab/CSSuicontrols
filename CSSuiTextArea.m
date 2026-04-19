@@ -38,7 +38,6 @@ classdef CSSuiTextArea < CSSBase
     %   See also: CSSBase, CSSPreset, CSSuiEditField
     %
     %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
-    %        Source: https://github.com/preraulab/labcode_main
 
     properties (Access = public)
         Placeholder      = ''

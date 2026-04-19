@@ -27,7 +27,6 @@ classdef (Abstract) CSSBase < handle
     %   See also: CSSPreset, CSSuiButton, CSSuiDropdown, CSSuiListBox, CSSuiEditField, CSSuiNumericField, CSSuiSwitch, CSSuiTable, CSSuiTextArea, CSSUIProgressBar, CSSuiLabel
     %
     %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
-    %        Source: https://github.com/preraulab/labcode_main
     %
     %   -----------------------------------------------------------------------
     %   HTML / CSS ELEMENT SCHEMA
