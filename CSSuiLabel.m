@@ -1,22 +1,31 @@
 classdef CSSuiLabel < CSSBase
-    %CSSuiLabel  CSS-styled text label backed by uihtml.
+    %CSSUILABEL  CSS-styled text label backed by uihtml
     %
-    %   USAGE
-    %     lbl = CSSuiLabel(parent, 'Text','Status:')
-    %     lbl = CSSuiLabel(parent, 'Text','Title', 'Style','shadow')
-    %     lbl.Text = 'Updated';        % live-patches without rebuild
+    %   Usage:
+    %       lbl = CSSuiLabel(parent, 'Text', 'Status:')
+    %       lbl.Text = 'Updated';        % live-patches without rebuild
     %
-    %   PROPERTIES
-    %     Text    Display string                                    default: 'Label'
+    %   Inputs:
+    %       parent : graphics container -- required
     %
-    %   CSS ELEMENT SCHEMA
-    %     #css-root / .css-control    Same element — the label IS the root div.
-    %       #cssbase-text             Span holding the text (live-patchable).
-    %     .css-disabled               On #css-root when Enabled=false.
+    %   Name-Value Pairs:
+    %       'Text'  : char - display string (default: 'Label')
+    %       'Style' : char - preset name (default: 'shadow')
+    %       (plus all CSSBase name-value pairs)
     %
-    %   CUSTOM CSS EXAMPLES
-    %     lbl.CSS = '#css-root { text-transform: uppercase; }';
-    %     lbl.CSS = '#cssbase-text { text-decoration: underline; }';
+    %   Outputs:
+    %       lbl : CSSuiLabel handle
+    %
+    %   Notes:
+    %       CSS element schema:
+    %           #css-root / .css-control   Same element — the label IS the root
+    %             #cssbase-text            Span holding the text (live-patchable)
+    %           .css-disabled              On #css-root when Enabled=false
+    %
+    %   See also: CSSBase, CSSPreset, CSSuiButton
+    %
+    %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
+    %        Source: https://github.com/preraulab/labcode_main
 
     properties (Access = public)
         Text = 'Label'

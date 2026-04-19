@@ -1,38 +1,45 @@
 classdef CSSuiNumericField < CSSBase
-    %CSSuiNumericField  CSS-styled numeric edit field with optional step buttons, backed by uihtml.
+    %CSSUINUMERICFIELD  CSS-styled numeric edit field with optional step buttons, backed by uihtml
     %
-    %   USAGE
-    %     nf = CSSuiNumericField(parent, 'Value',50, 'Min',0, 'Max',100)
-    %     nf = CSSuiNumericField(parent, 'Value',0, 'Step',1, 'Style','shadow')
-    %     nf.ValueChangedFcn = @(s,e) fprintf('%.2f\n', e.Value);
+    %   Usage:
+    %       nf = CSSuiNumericField(parent, 'Value', 50, 'Min', 0, 'Max', 100)
+    %       nf.ValueChangedFcn = @(s,e) fprintf('%.2f\n', e.Value);
     %
-    %   PROPERTIES
-    %     Value             Numeric value                           default: 0
-    %     Limits            [Min Max] convenience alias             default: [-Inf Inf]
-    %     Min               Minimum allowed                         default: -Inf
-    %     Max               Maximum allowed                         default:  Inf
-    %     Step              Step for +/- buttons (0 = hidden)       default: 0
-    %     DecimalPlaces     Display precision                       default: 4
-    %     Format            printf format string ('' = auto)        default: ''
-    %     Placeholder       Hint text when empty                    default: ''
-    %     Label             Adjacent text label                     default: ''
-    %     LabelSide         'left' | 'right'                        default: 'left'
-    %     ValueChangedFcn   @(src,evt) on Enter / blur              default: []
-    %     ValueChangingFcn  @(src,evt) on every keystroke           default: []
+    %   Inputs:
+    %       parent : graphics container -- required
     %
-    %   CSS ELEMENT SCHEMA
-    %     #css-root               Outer sizing container (CSSBase-managed)
-    %       .css-label            Adjacent text label div (when Label is set)
-    %       .css-control          Input surface wrapper (has bg / shadow)
-    %         button#nf-dec       Decrement button (when Step > 0)
-    %         input#inp           The <input type="text"> element
-    %         button#nf-inc       Increment button (when Step > 0)
-    %     .css-disabled           On #css-root when Enabled=false
+    %   Name-Value Pairs:
+    %       'Value'            : double - numeric value (default: 0)
+    %       'Limits'           : 1x2 double - [Min Max] convenience alias (default: [-Inf Inf])
+    %       'Min'              : double - minimum allowed (default: -Inf)
+    %       'Max'              : double - maximum allowed (default: Inf)
+    %       'Step'             : double - step for +/- buttons (0 = hidden) (default: 0)
+    %       'DecimalPlaces'    : integer - display precision (default: 4)
+    %       'Format'           : char - printf format string ('' = auto) (default: '')
+    %       'Placeholder'      : char - hint text when empty (default: '')
+    %       'Label'            : char - adjacent text label (default: '')
+    %       'LabelSide'        : char - 'left' | 'right' (default: 'left')
+    %       'ValueChangedFcn'  : function handle - @(src, evt) on Enter/blur (default: [])
+    %       'ValueChangingFcn' : function handle - @(src, evt) on each keystroke (default: [])
+    %       (plus all CSSBase name-value pairs)
     %
-    %   CUSTOM CSS EXAMPLES
-    %     nf.CSS = '.css-control { border: 2px solid #1976D2; }';
-    %     nf.CSS = '.css-label   { font-style: italic; }';
-    %     nf.CSS = 'input        { text-align: right; }';
+    %   Outputs:
+    %       nf : CSSuiNumericField handle
+    %
+    %   Notes:
+    %       CSS element schema:
+    %           #css-root      Outer sizing container
+    %             .css-label   Adjacent text label (when Label is set)
+    %             .css-control Input surface wrapper
+    %               button#nf-dec Decrement button (when Step > 0)
+    %               input#inp     The <input type="text"> element
+    %               button#nf-inc Increment button (when Step > 0)
+    %           .css-disabled  On #css-root when Enabled=false
+    %
+    %   See also: CSSBase, CSSPreset, CSSuiEditField
+    %
+    %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
+    %        Source: https://github.com/preraulab/labcode_main
 
     properties (Access = public)
         Min              = -Inf

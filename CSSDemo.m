@@ -1,36 +1,40 @@
+%CSSDEMO  Interactive demo and functional test for the CSS component library
+%
+%   Usage:
+%       CSSDemo()
+%
+%   Inputs:
+%       none
+%
+%   Outputs:
+%       none (side effects only — opens a demo uifigure)
+%
+%   Notes:
+%       Creates a uifigure with all seven CSS components laid out in a grid.
+%       Each component fires callbacks that update a status label so you can
+%       verify bidirectional communication. Native MATLAB controls let you
+%       toggle enabled-state, switch presets on-the-fly, and trigger
+%       programmatic value changes.
+%
+%       CSS element schema (same across all components):
+%           #css-root       Outer sizing container
+%           .css-control    Main interactive surface
+%           .css-label      Adjacent text label
+%           .css-icon       SVG icon element (CSSuiButton only)
+%           #cssbase-text   Live-patchable text span
+%           .css-disabled   On #css-root when Enabled=false
+%           .css-surface    Primary rendered surface
+%           .css-clickable  Interactive surfaces with hover/active animations
+%
+%       Components demonstrated: CSSuiButton, CSSuiLabel, CSSuiDropdown,
+%       CSSuiEditField, CSSuiNumericField, CSSuiSwitch, CSSuiTextArea.
+%
+%   See also: CSSBase, CSSPreset, CSSuiButton, CSSuiLabel, CSSuiDropdown, CSSuiEditField, CSSuiNumericField, CSSuiSwitch, CSSuiTextArea
+%
+%   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
+%        Source: https://github.com/preraulab/labcode_main
+
 function CSSDemo()
-%CSSDemo  Interactive demo and functional test for the CSS component library.
-%
-%   Run with:   CSSDemo()
-%
-%   Creates a uifigure with all seven CSS components laid out in a grid.
-%   Each component fires callbacks that update a status label so you can
-%   verify bidirectional communication.  Native MATLAB controls let you
-%   toggle enabled-state, switch presets on-the-fly, and trigger
-%   programmatic value changes.
-%
-%   -------------------------------------------------------------------------
-%   CSS ELEMENT SCHEMA (same across all components)
-%   -------------------------------------------------------------------------
-%     #css-root       Outer sizing container (Width/Height/OuterPadding/Border)
-%     .css-control    Main interactive surface (button, input wrapper, etc.)
-%     .css-label      Adjacent text label (EditField, Dropdown, Switch, etc.)
-%     .css-icon       SVG icon element (CSSuiButton only)
-%     #cssbase-text   Live-patchable text span (button, label, switch)
-%     .css-disabled   On #css-root when Enabled=false
-%     .css-surface    Primary rendered surface — targeted by CSSPreset rules
-%     .css-clickable  Interactive surfaces — hover/active animations
-%
-%   -------------------------------------------------------------------------
-%   COMPONENTS DEMONSTRATED
-%   -------------------------------------------------------------------------
-%     CSSuiButton       click, programmatic text change, custom CSS
-%     CSSuiLabel        static text, programmatic update
-%     CSSuiDropdown     ValueChangedFcn, Items change, programmatic Value
-%     CSSuiEditField    ValueChangedFcn, ValueChangingFcn, Editable toggle
-%     CSSuiNumericField Min/Max/Step, ValueChangedFcn, ValueChangingFcn
-%     CSSuiSwitch       ValueChangedFcn, programmatic toggle
-%     CSSuiTextArea     ValueChangedFcn, ValueChangingFcn, Placeholder
 
 %% ── Figure & layout ───────────────────────────────────────────────────────
 fig = uifigure('Name','CSS Component Demo', ...

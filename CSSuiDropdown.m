@@ -1,32 +1,38 @@
 classdef CSSuiDropdown < CSSBase
-    %CSSuiDropdown  CSS-styled dropdown/select component backed by uihtml.
+    %CSSUIDROPDOWN  CSS-styled dropdown/select component backed by uihtml
     %
-    %   USAGE
-    %     dd = CSSuiDropdown(parent, 'Items',{'A','B','C'})
-    %     dd = CSSuiDropdown(parent, 'Items',{'X','Y'}, 'Style','shadow')
-    %     dd.ValueChangedFcn = @(s,e) disp(e.Value);
-    %     dd.Value = 'B';               % live-patches without rebuild
+    %   Usage:
+    %       dd = CSSuiDropdown(parent, 'Items', {'A','B','C'})
+    %       dd.Value = 'B';               % live-patches without rebuild
     %
-    %   PROPERTIES
-    %     Items             Cell array of option strings            default: {'Option 1','Option 2'}
-    %     Value             Currently selected string               default: Items{1}
-    %     Label             Adjacent text label                     default: ''
-    %     LabelSide         'left' | 'right'                        default: 'left'
-    %     DropdownWidth     Width of just the select element        default: '' (flex fill)
-    %     DropdownHeight    Height of just the select element       default: '' (auto)
-    %     ValueChangedFcn   @(src, evt) callback                    default: []
+    %   Inputs:
+    %       parent : graphics container -- required
     %
-    %   CSS ELEMENT SCHEMA
-    %     #css-root               Outer sizing container (CSSBase-managed)
-    %       .css-label            Adjacent text label div (when Label is set)
-    %       .css-control          Dropdown surface wrapper (has bg / shadow / arrow)
-    %         select#sel          The native <select> element
-    %     .css-disabled           On #css-root when Enabled=false
+    %   Name-Value Pairs:
+    %       'Items'           : cell - option strings (default: {'Option 1','Option 2'})
+    %       'Value'           : char - currently selected string (default: Items{1})
+    %       'Label'           : char - adjacent text label (default: '')
+    %       'LabelSide'       : char - 'left' | 'right' (default: 'left')
+    %       'DropdownWidth'   : char - CSS width of just the select (default: '')
+    %       'DropdownHeight'  : char - CSS height of just the select (default: '')
+    %       'ValueChangedFcn' : function handle - @(src, evt) callback (default: [])
+    %       (plus all CSSBase name-value pairs)
     %
-    %   CUSTOM CSS EXAMPLES
-    %     dd.CSS = '.css-control { border: 2px solid #1976D2; }';
-    %     dd.CSS = '.css-label   { font-style: italic; }';
-    %     dd.CSS = '.css-control::after { content: "\25B6"; }';  % swap arrow glyph
+    %   Outputs:
+    %       dd : CSSuiDropdown handle
+    %
+    %   Notes:
+    %       CSS element schema:
+    %           #css-root     Outer sizing container
+    %             .css-label  Adjacent text label div (when Label is set)
+    %             .css-control Dropdown surface wrapper
+    %               select#sel  The native <select> element
+    %           .css-disabled On #css-root when Enabled=false
+    %
+    %   See also: CSSBase, CSSPreset, CSSuiListBox, CSSuiEditField
+    %
+    %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
+    %        Source: https://github.com/preraulab/labcode_main
 
     properties (Access = public)
         ValueChangedFcn = []

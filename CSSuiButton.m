@@ -1,42 +1,43 @@
 classdef CSSuiButton < CSSBase
-    %CSSuiButton  CSS-styled push-button backed by uihtml.
+    %CSSUIBUTTON  CSS-styled push-button backed by uihtml
     %
-    %   USAGE
-    %     btn = CSSuiButton(parent)
-    %     btn = CSSuiButton(parent, 'Text','Save', 'Icon','icon.svg', 'Style','flat')
-    %     btn = CSSuiButton(parent, 'Text','Go',   'Icon','anim.gif')
-    %     btn = CSSuiButton(parent, 'Text','Next', 'Icon','M5 12h14M12 5l7 7-7 7')
-    %     btn.Text = 'Updated';          % live patch — no page reload
-    %     btn.BackgroundColor = '#e8f5e9';
+    %   Usage:
+    %       btn = CSSuiButton(parent)
+    %       btn = CSSuiButton(parent, 'Text', 'Save', 'Icon', 'icon.svg', 'Style', 'flat')
+    %       btn.Text = 'Updated';          % live patch — no page reload
     %
-    %   PROPERTIES
-    %     Text              Button label string                     default: 'Button'
-    %     Icon              One of:
-    %                         • SVG inner-markup string  e.g. '<path d="M5 12h14"/>'
-    %                         • SVG path data string     e.g. 'M5 12h14M12 5l7 7-7 7'
-    %                         • Path to .svg file        (inlined as markup)
-    %                         • Path to raster file      (.png .jpg .jpeg .gif .webp .bmp .ico)
-    %                         • Base64 data URI          'data:image/...;base64,...'
-    %                       default: ''
-    %     IconPosition      'top'|'bottom'|'left'|'right'          default: 'top'
-    %     IconSize          CSS size, e.g. '18px' or '1.5em'       default: '1.2em'
-    %     Shape             'rectangle'|'square'|'circle'          default: 'rectangle'
-    %                       square/circle fill the component as the largest square that fits
-    %     IconOnlyWidth     CSS width string, e.g. '60px'          default: ''
-    %                       when set and an Icon is present, text is hidden below this width
-    %     ButtonPushedFcn   @(src, evt) callback                   default: []
+    %   Inputs:
+    %       parent : graphics container - target uifigure/uipanel/uigrid -- required
     %
-    %   CSS ELEMENT SCHEMA
-    %     #css-root           Outer sizing container (CSSBase-managed)
-    %     .css-control        The <button> element
-    %       #cssbase-text     Span holding the button text (live-patchable)
-    %       .css-icon         SVG or <img> icon element (when Icon is set)
-    %     .css-disabled       On #css-root when Enabled=false
+    %   Name-Value Pairs:
+    %       'Text'            : char - button label (default: 'Button')
+    %       'Icon'            : char - SVG markup, SVG path data, .svg/.png/.jpg/... file path, or data URI (default: '')
+    %       'IconPosition'    : char - 'top' | 'bottom' | 'left' | 'right' (default: 'top')
+    %       'IconSize'        : char - CSS size e.g. '18px' or '1.5em' (default: '1.2em')
+    %       'Shape'           : char - 'rectangle' | 'square' | 'circle' (default: 'rectangle')
+    %       'IconOnlyWidth'   : char - CSS width below which text hides when Icon is set (default: '')
+    %       'ButtonPushedFcn' : function handle - @(src, evt) callback (default: [])
+    %       (plus all CSSBase name-value pairs)
     %
-    %   CUSTOM CSS EXAMPLES
-    %     btn.CSS = '.css-control { text-transform: uppercase; letter-spacing: 0.1em; }';
-    %     btn.CSS = '.css-icon   { fill: #E53935; }';   % only affects inline SVG icons
-    %     btn.CSS = '.css-control.css-clickable:hover { transform: none !important; }';
+    %   Outputs:
+    %       btn : CSSuiButton handle
+    %
+    %   Notes:
+    %       CSS element schema:
+    %           #css-root       Outer sizing container (CSSBase-managed)
+    %           .css-control    The <button> element
+    %             #cssbase-text   Span holding the button text (live-patchable)
+    %             .css-icon       SVG or <img> icon element
+    %           .css-disabled   On #css-root when Enabled=false
+    %
+    %       Custom CSS examples:
+    %           btn.CSS = '.css-control { text-transform: uppercase; }';
+    %           btn.CSS = '.css-icon   { fill: #E53935; }';
+    %
+    %   See also: CSSBase, CSSPreset, CSSuiLabel, CSSuiDropdown
+    %
+    %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
+    %        Source: https://github.com/preraulab/labcode_main
 
     properties (Access = public)
         Text            = 'Button'

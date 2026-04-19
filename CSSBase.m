@@ -1,10 +1,33 @@
 classdef (Abstract) CSSBase < handle
-    %CSSBASE  Abstract base class for CSS-styled HTML-backed MATLAB UI controls.
+    %CSSBASE  Abstract base class for CSS-styled HTML-backed MATLAB UI controls
     %
-    %   Every CSSBase component is a uihtml element whose content is a
-    %   self-contained HTML document.  CSSBase handles the full lifecycle:
-    %   temp-file writing, JS bridge injection, Enabled-state queuing, CSS
-    %   variable compilation, and live CSS patching without page reloads.
+    %   Usage:
+    %       (abstract — subclass and call obj@CSSBase(parent, ...) from the
+    %        concrete constructor, then obj.endInit() after setting properties)
+    %
+    %   Inputs:
+    %       parent  : graphics container - target uifigure/uipanel/uigrid -- required
+    %       options : name-value pairs:
+    %                 Position (1x4 double, default: [10 10 120 36])
+    %                 Enabled  (logical, default: true)
+    %                 TempDir  (char, default: tempdir())
+    %                 Style    (char, default: '')
+    %                 CSS      (char, default: '')
+    %                 CSSFile  (char, default: '')
+    %
+    %   Outputs:
+    %       obj : CSSBase handle object (concrete subclass)
+    %
+    %   Notes:
+    %       Every CSSBase component is a uihtml element whose content is a
+    %       self-contained HTML document. CSSBase handles the full lifecycle:
+    %       temp-file writing, JS bridge injection, Enabled-state queuing, CSS
+    %       variable compilation, and live CSS patching without page reloads.
+    %
+    %   See also: CSSPreset, CSSuiButton, CSSuiDropdown, CSSuiListBox, CSSuiEditField, CSSuiNumericField, CSSuiSwitch, CSSuiTable, CSSuiTextArea, CSSUIProgressBar, CSSuiLabel
+    %
+    %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
+    %        Source: https://github.com/preraulab/labcode_main
     %
     %   -----------------------------------------------------------------------
     %   HTML / CSS ELEMENT SCHEMA

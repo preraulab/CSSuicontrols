@@ -1,47 +1,60 @@
 classdef CSSuiTable < CSSBase
-    %CSSuiTable  CSS-styled data table backed by uihtml.
+    %CSSUITABLE  CSS-styled data table backed by uihtml
     %
-    %   USAGE
-    %     t = CSSuiTable(parent, 'Data', myCell, 'ColumnName', {'Name','Fs','Files'})
-    %     t = CSSuiTable(parent, 'Data', myCell, 'ColumnWidth', [200 80 80], 'Style','shadow')
-    %     t.SelectionChangedFcn = @(s,e) disp(e.Selection);
-    %     t.Data = newData;            % live update — no full reload
+    %   Usage:
+    %       t = CSSuiTable(parent, 'Data', myCell, 'ColumnName', {'Name','Fs','Files'})
+    %       t = CSSuiTable(parent, 'Data', myCell, 'ColumnWidth', [200 80 80], 'Style', 'shadow')
+    %       t.SelectionChangedFcn = @(s,e) disp(e.Selection);
+    %       t.Data = newData;            % live update — no full reload
     %
-    %   PROPERTIES
-    %     Data                  N×C cell array of display values           default: {}
-    %     ColumnName            1×C cell of header strings                 default: {}
-    %     ColumnWidth           1×C numeric pixel widths, or [] (auto)     default: []
-    %     SelectionType         'row' | 'cell' | 'none'                    default: 'row'
-    %     Selection             Selected row indices (row mode) or
-    %                           [row col] pairs (cell mode)                default: []
-    %     SelectionChangedFcn   @(src, evt) callback on single click         default: []
-    %     DoubleClickFcn        @(src, evt) callback on double click         default: []
-    %     RowStriping           logical — alternate row shading             default: true
+    %   Inputs:
+    %       parent : ui container - parent (default: new uifigure)
     %
-    %   EVENT STRUCT (SelectionChangedFcn)
-    %     .Source               this CSSuiTable object
-    %     .Selection            row indices (row mode) or Nx2 matrix (cell mode)
-    %     .PreviousSelection    previous selection
+    %   Name-Value Pairs:
+    %       'Position'            : 1x4 double - [x y w h] (default: [10 10 400 250])
+    %       'Enabled'             : logical - enable interaction (default: true)
+    %       'TempDir'             : char - scratch dir (default: tempdir())
+    %       'Style'               : char - CSSBase style preset (default: 'shadow')
+    %       'CSS'                 : char - extra CSS (default: '')
+    %       'CSSFile'             : char - extra CSS file (default: '')
+    %       'Data'                : NxC cell - display values (default: {})
+    %       'ColumnName'          : 1xC cell - header strings (default: {})
+    %       'ColumnWidth'         : 1xC double - pixel widths, [] = auto (default: [])
+    %       'SelectionType'       : char - 'row' | 'cell' | 'none' (default: 'row')
+    %       'Selection'           : row indices or Nx2 [row col] pairs (default: [])
+    %       'SelectionChangedFcn' : @(src, evt) on click (default: [])
+    %       'DoubleClickFcn'      : @(src, evt) on double-click (default: [])
+    %       'RowStriping'         : logical - alternate row shading (default: true)
+    %       Additional CSS convenience properties are forwarded to CSSBase
+    %       (Color, BackgroundColor, FontSize, Padding, BorderRadius, etc.).
     %
-    %   EVENT STRUCT (DoubleClickFcn)
-    %     .Source               this CSSuiTable object
-    %     .Row                  1-based row index that was double-clicked
+    %   Outputs:
+    %       t : CSSuiTable handle
     %
-    %   CSS ELEMENT SCHEMA
-    %     #css-root               Outer sizing container (CSSBase-managed)
-    %       .css-control          Scrollable table wrapper
-    %         table               <table> element
-    %           thead > tr > th   Column headers
-    %           tbody > tr        Data rows
-    %             td              Data cells
-    %         .tbl-row.selected   Highlighted selected row(s)
-    %         .tbl-cell.selected  Highlighted selected cell (cell mode)
-    %     .css-disabled           On #css-root when Enabled=false
+    %   Notes:
+    %       SelectionChangedFcn event struct has fields .Source, .Selection,
+    %       .PreviousSelection. DoubleClickFcn event struct has .Source, .Row.
     %
-    %   CUSTOM CSS EXAMPLES
-    %     t.CSS = 'th { background: #dce4f0; }';
-    %     t.CSS = '.tbl-row.selected td { background: #bbdefb; }';
-    %     t.CSS = 'td { font-size: 11px; }';
+    %       CSS element schema:
+    %           #css-root                Outer sizing container (CSSBase-managed)
+    %             .css-control           Scrollable table wrapper
+    %               table                <table> element
+    %                 thead > tr > th    Column headers
+    %                 tbody > tr         Data rows
+    %                   td               Data cells
+    %               .tbl-row.selected    Highlighted selected row(s)
+    %               .tbl-cell.selected   Highlighted selected cell (cell mode)
+    %           .css-disabled            On #css-root when Enabled=false
+    %
+    %   Example:
+    %       t.CSS = 'th { background: #dce4f0; }';
+    %       t.CSS = '.tbl-row.selected td { background: #bbdefb; }';
+    %       t.CSS = 'td { font-size: 11px; }';
+    %
+    %   See also: CSSBase, CSSuiListBox, CSSuiEditField
+    %
+    %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
+    %        Source: https://github.com/preraulab/labcode_main
 
     properties (Access = public)
         SelectionChangedFcn = []

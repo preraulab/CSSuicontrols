@@ -1,53 +1,52 @@
 classdef SmoothProgressBar < CSSUIProgressBar
-    % SmoothProgressBar - Browser-driven smooth progress bar for MATLAB apps
+    %SMOOTHPROGRESSBAR  Browser-driven smooth progress bar for MATLAB apps
     %
-    %   Extends CSSUIProgressBar with continuous-time animation.  All frame
-    %   work (progress interpolation, colormap lookup, label formatting,
-    %   time-remaining estimation) runs inside the uihtml Chromium instance
-    %   via requestAnimationFrame at native 60 fps.  MATLAB only sends
-    %   discrete lifecycle events (startAnim / updateAnim / completeAnim /
-    %   resetAnim) — there is no MATLAB-side animation timer, no per-tick
-    %   colormap allocation, and no per-tick IPC round-trip.
+    %   Usage:
+    %       pb = SmoothProgressBar(parent)          % set N later via pb.N
+    %       pb = SmoothProgressBar(parent, N)
+    %       pb = SmoothProgressBar(parent, 'N', N)
+    %       pb = SmoothProgressBar(parent, 10, 'Color', '#e53935', 'BarHeight', 0.7)
     %
-    %   During the first iteration (before timing data is available) the bar
-    %   pulses via a requestAnimationFrame opacity animation running in the
-    %   browser compositor, fully independent of MATLAB's event loop.
+    %   Inputs:
+    %       parent : graphics container - UI container (uigridlayout, uifigure, uipanel, ...) -- required
+    %       N      : double - total number of iterations / work units (optional, positive scalar)
     %
-    % USAGE:
-    %   pb = SmoothProgressBar(parent)          % set N later via pb.N = 10
-    %   pb = SmoothProgressBar(parent, N)       % positional N
-    %   pb = SmoothProgressBar(parent, 'N', N)  % name-value N
+    %   Name-Value Pairs:
+    %       'N'                 : double - total iterations (default: [])
+    %       'Colormap'          : char - colormap for the fill gradient (default: 'turbo')
+    %       'ShowTimeRemaining' : logical - show time-remaining in label (default: false)
+    %       'ShowPercentage'    : logical - show percentage in label (default: false)
+    %       'TimerPeriod'       : double - CSS transition hint in seconds (default: 0.25)
+    %       (plus all CSSUIProgressBar / CSSBase styling properties)
     %
-    %   Any CSSUIProgressBar / CSSBase styling option can also be passed:
-    %   pb = SmoothProgressBar(parent, 10, 'Color','#e53935', 'BarHeight',0.7)
+    %   Outputs:
+    %       pb : SmoothProgressBar handle
     %
-    % INPUTS:
-    %   parent  - UI container (uigridlayout, uifigure, uipanel, etc.)
-    %   N       - Total number of iterations / work units (positive scalar)
+    %   Notes:
+    %       Extends CSSUIProgressBar with continuous-time animation. All frame
+    %       work (progress interpolation, colormap lookup, label formatting,
+    %       time-remaining estimation) runs inside the uihtml Chromium instance
+    %       via requestAnimationFrame at native 60 fps. MATLAB only sends
+    %       discrete lifecycle events — no MATLAB-side animation timer, no
+    %       per-tick colormap allocation, no per-tick IPC round-trip.
     %
-    % PROPERTIES:
-    %   N                  - Total iterations
-    %   Colormap           - Colormap name for the fill gradient (default 'turbo')
-    %   ShowTimeRemaining  - Show time-remaining string in the label
-    %   ShowPercentage     - Show percentage in the label
-    %   TimerPeriod        - CSS transition duration hint, seconds (default 0.25)
+    %       During the first iteration (before timing data is available) the
+    %       bar pulses via a requestAnimationFrame opacity animation running
+    %       in the browser compositor, independent of MATLAB's event loop.
     %
-    %   All CSSUIProgressBar / CSSBase styling properties are also available
-    %   (Color, BackgroundColor, BarHeight, BarBorderRadius, FontSize, etc.)
+    %       Key methods: start(), updateIteration(k), complete(), reset().
     %
-    % METHODS:
-    %   start()              - Start / restart the animation
-    %   updateIteration(k)   - Notify that iteration k has completed
-    %   complete()           - Force bar to 100% immediately
-    %   reset()              - Reset bar to 0 and stop the animation
+    %   Example:
+    %       fig = uifigure('Position',[100 100 600 80]);
+    %       gl  = uigridlayout(fig,[1 1]);
+    %       pb  = SmoothProgressBar(gl, 10);
+    %       pb.ShowPercentage    = true;
+    %       pb.ShowTimeRemaining = true;
     %
-    % EXAMPLE:
-    %   fig = uifigure('Position',[100 100 600 80]);
-    %   gl  = uigridlayout(fig,[1 1]);
+    %   See also: CSSUIProgressBar, CSSBase, CSSProgressBarDemo
     %
-    %   pb = SmoothProgressBar(gl, 10);
-    %   pb.ShowPercentage    = true;
-    %   pb.ShowTimeRemaining = true;
+    %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
+    %        Source: https://github.com/preraulab/labcode_main
     %
     %   pb.start();
     %   for k = 1:10

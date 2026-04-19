@@ -1,31 +1,51 @@
 classdef CSSuiEditField < CSSBase
-    %CSSuiEditField  CSS-styled single-line text edit field backed by uihtml.
+    %CSSUIEDITFIELD  CSS-styled single-line text edit field backed by uihtml
     %
-    %   USAGE
-    %     ef = CSSuiEditField(parent, 'Placeholder','Enter name...')
-    %     ef = CSSuiEditField(parent, 'Value','hello', 'Style','shadow')
-    %     ef.ValueChangedFcn = @(s,e) disp(e.Value);
+    %   Usage:
+    %       ef = CSSuiEditField(parent, 'Placeholder', 'Enter name...')
+    %       ef = CSSuiEditField(parent, 'Value', 'hello', 'Style', 'shadow')
+    %       ef.ValueChangedFcn = @(s,e) disp(e.Value);
     %
-    %   PROPERTIES
-    %     Value             Text content                            default: ''
-    %     Placeholder       Hint text when empty                    default: ''
-    %     Label             Adjacent text label                     default: ''
-    %     LabelSide         'left' | 'right'                        default: 'left'
-    %     Editable          false = read-only                       default: true
-    %     ValueChangedFcn   @(src,evt) on Enter / focus-out         default: []
-    %     ValueChangingFcn  @(src,evt) on every keystroke           default: []
+    %   Inputs:
+    %       parent : ui container - parent (default: new uifigure)
     %
-    %   CSS ELEMENT SCHEMA
-    %     #css-root               Outer sizing container (CSSBase-managed)
-    %       .css-label            Adjacent text label div (when Label is set)
-    %       .css-control          Input surface wrapper div (has bg / shadow)
-    %         input#inp           The actual <input> element (transparent bg)
-    %     .css-disabled           On #css-root when Enabled=false
+    %   Name-Value Pairs:
+    %       'Position'         : 1x4 double - [x y w h] (default: [10 10 200 36])
+    %       'Enabled'          : logical - enable interaction (default: true)
+    %       'TempDir'          : char - scratch dir (default: tempdir())
+    %       'Style'            : char - CSSBase style preset (default: '')
+    %       'CSS'              : char - extra CSS (default: '')
+    %       'CSSFile'          : char - extra CSS file (default: '')
+    %       'Value'            : char - initial text content (default: '')
+    %       'Placeholder'      : char - hint text when empty (default: '')
+    %       'Label'            : char - adjacent text label (default: '')
+    %       'LabelSide'        : char - 'left' or 'right' (default: 'left')
+    %       'Editable'         : logical - false = read-only (default: true)
+    %       'ValueChangedFcn'  : @(src, evt) on Enter / focus-out (default: [])
+    %       'ValueChangingFcn' : @(src, evt) on every keystroke (default: [])
+    %       Additional CSS convenience properties are forwarded to CSSBase
+    %       (Color, BackgroundColor, FontSize, Padding, BorderRadius, etc.).
     %
-    %   CUSTOM CSS EXAMPLES
-    %     ef.CSS = '.css-control { border: 2px solid #1976D2; }';
-    %     ef.CSS = '.css-label   { font-style: italic; }';
-    %     ef.CSS = 'input        { text-align: right; }';
+    %   Outputs:
+    %       ef : CSSuiEditField handle
+    %
+    %   Notes:
+    %       CSS element schema:
+    %           #css-root                Outer sizing container (CSSBase-managed)
+    %             .css-label             Adjacent text label div (when Label is set)
+    %             .css-control           Input surface wrapper (bg / shadow)
+    %               input#inp            The <input> element (transparent bg)
+    %           .css-disabled            On #css-root when Enabled=false
+    %
+    %   Example:
+    %       ef.CSS = '.css-control { border: 2px solid #1976D2; }';
+    %       ef.CSS = '.css-label   { font-style: italic; }';
+    %       ef.CSS = 'input        { text-align: right; }';
+    %
+    %   See also: CSSBase, CSSuiListBox, CSSuiTable
+    %
+    %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
+    %        Source: https://github.com/preraulab/labcode_main
 
     properties (Access = public)
         Placeholder      = ''

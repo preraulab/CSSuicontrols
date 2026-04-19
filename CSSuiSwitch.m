@@ -1,28 +1,36 @@
 classdef CSSuiSwitch < CSSBase
-    %CSSuiSwitch  CSS-styled toggle switch backed by uihtml.
+    %CSSUISWITCH  CSS-styled toggle switch backed by uihtml
     %
-    %   USAGE
-    %     sw = CSSuiSwitch(parent, 'Text','Notifications', 'Value',true)
-    %     sw = CSSuiSwitch(parent, 'Style','shadow')
-    %     sw.ValueChangedFcn = @(s,e) fprintf('State: %d\n', e.Value);
+    %   Usage:
+    %       sw = CSSuiSwitch(parent, 'Text', 'Notifications', 'Value', true)
+    %       sw.ValueChangedFcn = @(s,e) fprintf('State: %d\n', e.Value);
     %
-    %   PROPERTIES
-    %     Value             Logical (true = on)                     default: false
-    %     Text              Label string beside the toggle          default: 'Toggle'
-    %     SwitchOnColor     Track colour when on (CSS colour str)   default: '#A2D2FF'
-    %     ValueChangedFcn   @(src, evt) callback                   default: []
+    %   Inputs:
+    %       parent : graphics container -- required
     %
-    %   CSS ELEMENT SCHEMA
-    %     #css-root               Outer sizing container (CSSBase-managed)
-    %       label.css-control     Toggle track wrapper (contains the checkbox)
-    %         input#chk           Hidden <input type="checkbox">
-    %         span.slider         Animated thumb / track fill
-    %       span.css-label#cssbase-text  Text label beside the toggle (live-patchable)
-    %     .css-disabled           On #css-root when Enabled=false
+    %   Name-Value Pairs:
+    %       'Value'           : logical - true = on (default: false)
+    %       'Text'            : char - label beside the toggle (default: 'Toggle')
+    %       'SwitchOnColor'   : char - CSS color when on (default: '#A2D2FF')
+    %       'ValueChangedFcn' : function handle - @(src, evt) callback (default: [])
+    %       (plus all CSSBase name-value pairs)
     %
-    %   CUSTOM CSS EXAMPLES
-    %     sw.CSS = '.slider { border-radius: 4px; }';      % square toggle
-    %     sw.CSS = '.css-label { font-weight: 700; }';
+    %   Outputs:
+    %       sw : CSSuiSwitch handle
+    %
+    %   Notes:
+    %       CSS element schema:
+    %           #css-root               Outer sizing container
+    %             label.css-control     Toggle track wrapper
+    %               input#chk           Hidden <input type="checkbox">
+    %               span.slider         Animated thumb / track fill
+    %             span.css-label#cssbase-text  Text label
+    %           .css-disabled           On #css-root when Enabled=false
+    %
+    %   See also: CSSBase, CSSPreset, CSSuiButton
+    %
+    %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
+    %        Source: https://github.com/preraulab/labcode_main
 
     properties (Access = public)
         Text            = 'Toggle'

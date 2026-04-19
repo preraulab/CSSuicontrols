@@ -1,14 +1,26 @@
+%CSSPROGRESSBARDEMO  Demo and functional test for CSSUIProgressBar
+%
+%   Usage:
+%       CSSProgressBarDemo()
+%
+%   Inputs:
+%       none
+%
+%   Outputs:
+%       none (side effects only — opens a demo uifigure)
+%
+%   Notes:
+%       Tests TextPosition ('none'/'above'/'below'/'on'), BarHeight
+%       (thin/medium/tall/full), BarBorderRadius (square/rounded/pill),
+%       ShowTicks, custom color/shadow, SmoothProgressBar, and live updates
+%       of Value, Text, Color, BarHeight, and BarBorderRadius.
+%
+%   See also: CSSUIProgressBar, SmoothProgressBar, CSSBase
+%
+%   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
+%        Source: https://github.com/preraulab/labcode_main
+
 function CSSProgressBarDemo()
-%CSSProgressBarDemo  Demo and functional test for CSSUIProgressBar.
-%
-%   Run with:   CSSProgressBarDemo()
-%
-%   Tests:
-%     - TextPosition 'none', 'above', 'below', 'on'
-%     - BarHeight at thin / medium / tall / full
-%     - BarBorderRadius: square → rounded → pill
-%     - ShowTicks, custom color/shadow, SmoothProgressBar
-%     - Live Value, Text, Color, BarHeight, and BarBorderRadius updates
 
 %% ── Figure & layout ───────────────────────────────────────────────────────
 fig = uifigure('Name', 'CSSUIProgressBar Demo', ...

@@ -1,45 +1,41 @@
 classdef CSSPreset
-    %CSSPreset  Named CSS style presets for CSSBase components.
+    %CSSPRESET  Named CSS style presets for CSSBase components
     %
-    %   A CSSPreset is a pure data container — it holds convenience property
-    %   values and a raw CSS string.  It has no behaviour beyond static factory
-    %   methods.  Pass it to any CSSBase component via the 'Style' argument.
+    %   Usage:
+    %       btn = CSSuiButton(parent, 'Style', 'shadow');           % by name
+    %       btn = CSSuiButton(parent, 'Style', CSSPreset.shadow()); % by object
+    %       p = CSSPreset.flat(); p.Color = '#2a7a2a';
+    %       btn.setStyle('neon');
     %
-    %   USAGE
-    %     btn = CSSuiButton(parent, 'Style', 'shadow');          % by name
-    %     btn = CSSuiButton(parent, 'Style', CSSPreset.shadow()); % by object
+    %   Inputs:
+    %       (static factories — no arguments; set properties on the returned object)
     %
-    %     % Customise a preset before applying:
-    %     p = CSSPreset.flat();
-    %     p.Color = '#2a7a2a';
-    %     btn = CSSuiButton(parent, 'Style', p);
+    %   Outputs:
+    %       p : CSSPreset - pure data container with convenience properties and CSS string
     %
-    %     % Change preset after construction:
-    %     btn.setStyle('neon');
+    %   Notes:
+    %       A CSSPreset has no behaviour beyond static factory methods. Pass
+    %       it to any CSSBase component via the 'Style' argument.
     %
-    %   AVAILABLE PRESETS
-    %     CSSPreset.shadow()  — Neumorphic raised-shadow (default for buttons/labels)
-    %     CSSPreset.flat()    — Clean flat modern style
-    %     CSSPreset.glass()   — Frosted-glass / glassmorphism style
-    %     CSSPreset.neon()    — Cyberpunk dark with glowing cyan borders
-    %     CSSPreset.pill()    — Rounded pill with solid purple accent
-    %     CSSPreset.dark()    — Dark-mode flat (VS Code style)
-    %     CSSPreset.list()    — Cell array of preset names
+    %       Available presets:
+    %           CSSPreset.shadow() - Neumorphic raised-shadow (default)
+    %           CSSPreset.flat()   - Clean flat modern style
+    %           CSSPreset.glass()  - Frosted-glass / glassmorphism
+    %           CSSPreset.neon()   - Cyberpunk dark with glowing cyan borders
+    %           CSSPreset.pill()   - Rounded pill with solid purple accent
+    %           CSSPreset.dark()   - Dark-mode flat (VS Code style)
+    %           CSSPreset.list()   - Cell array of preset names
     %
-    %   HOW PRESETS WORK
-    %   A preset sets convenience properties (Color, BackgroundColor, …) and
-    %   appends a CSS string that targets the standard element schema:
+    %       A preset sets convenience properties (Color, BackgroundColor, ...)
+    %       and appends a CSS string that targets the standard schema selectors:
+    %       .css-surface, .css-clickable, .css-label. Utility methods
+    %       scaleShadow(shadow, factor) and invertShadow(shadow) manipulate
+    %       shadow strings.
     %
-    %     .css-surface    — primary rendered surface (button, input wrapper, etc.)
-    %     .css-clickable  — interactive elements; adds hover/active animations
-    %     .css-label      — adjacent text label (EditField, Dropdown, etc.)
+    %   See also: CSSBase, CSSuiButton, CSSuiDropdown, CSSuiEditField, CSSuiSwitch
     %
-    %   These class names are stable across all components, so a single preset
-    %   CSS string styles every component type consistently.
-    %
-    %   UTILITIES
-    %     CSSPreset.scaleShadow(shadow, factor)   scale shadow px/em values
-    %     CSSPreset.invertShadow(shadow)          flip outset → inset shadow
+    %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
+    %        Source: https://github.com/preraulab/labcode_main
 
     % =====================================================================
     %  Properties — same names as CSSBase convenience properties + CSS

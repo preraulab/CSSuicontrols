@@ -1,49 +1,49 @@
 classdef CSSUIProgressBar < CSSBase
-    %CSSUIProgressBar  CSS-styled horizontal progress bar backed by uihtml.
+    %CSSUIPROGRESSBAR  CSS-styled horizontal progress bar backed by uihtml
     %
-    %   A standalone, fully styleable progress bar. Supports an optional text
-    %   label (above, below, or overlaid on the bar) and optional tick marks.
-    %   Designed to pair with SmoothProgressBar for timer-driven animation,
-    %   but fully usable on its own for deterministic 0→1 progress display.
+    %   Usage:
+    %       pb = CSSUIProgressBar(parent)
+    %       pb = CSSUIProgressBar(parent, 'Value', 0.5, 'Style', 'shadow')
+    %       pb = CSSUIProgressBar(parent, 'TextPosition', 'above', 'ShowTicks', true)
+    %       pb.Value = 0.75;          % live-updates, no rebuild
+    %       pb.Text  = '75% — 3s';    % live-updates, no rebuild
     %
-    % USAGE:
-    %   pb = CSSUIProgressBar(parent)
-    %   pb = CSSUIProgressBar(parent, 'Value', 0.5, 'Style', 'shadow')
-    %   pb = CSSUIProgressBar(parent, 'TextPosition', 'above', 'ShowTicks', true)
-    %   pb.Value = 0.75;          % live-updates, no rebuild
-    %   pb.Text  = '75% — 3s';   % live-updates, no rebuild
+    %   Inputs:
+    %       parent : graphics container -- required
     %
-    % CSS ELEMENT SCHEMA:
-    %   #css-root           Outer flex column container
-    %   .css-control        Bar track (uses --bg-color for background)
-    %     .css-bar          Fill element (uses --color for fill)
-    %     .css-ticks        Tick mark container (when ShowTicks=true)
-    %       .css-tick       Individual tick marks
-    %   .css-label          Text label (when TextPosition != 'none')
-    %     #cssbase-text     Span targeted by the setText bridge command
+    %   Name-Value Pairs:
+    %       'Value'        : double - progress fraction 0..1 (default: 0)
+    %       'Text'         : char - label text (default: '')
+    %       'TextPosition' : char - 'none' | 'above' | 'below' | 'on' (default: 'none')
+    %       'ShowTicks'    : logical - draw tick marks along track (default: false)
+    %       (plus all CSSBase name-value pairs)
     %
-    % KEY CSS CUSTOM PROPERTIES:
-    %   --color             Bar fill color           (via Color property)
-    %   --bg-color          Track background color   (via BackgroundColor property)
-    %   --bar-height        Bar height fraction 0-1  (via BarHeight property)
-    %   --bar-radius        Bar fill border-radius   (via BarBorderRadius property)
-    %   --tick-color        Tick mark color          (via TickColor property)
-    %   --tick-height       Tick mark height         (via TickHeight property)
-    %   --label-color       Text label color         (via LabelColor property)
-    %   --progress-pct      Progress fraction 0-1    (via Value property)
+    %   Outputs:
+    %       pb : CSSUIProgressBar handle
     %
-    % CUSTOM CSS EXAMPLES:
-    %   pb.Color           = '#0072ff';
-    %   pb.BackgroundColor = '#d8d8d8';
-    %   pb.BorderRadius    = '8px';
-    %   pb.BoxShadow       = 'inset 0 2px 4px rgba(0,0,0,0.15)';
-    %   pb.CSS = '.css-bar { background: linear-gradient(90deg,#00c6ff,#0072ff); }';
-    %   pb.CSS = '.css-label { font-weight: bold; letter-spacing: 0.04em; }';
-    %   pb.CSS = '.css-tick { width: 2px; }';
+    %   Notes:
+    %       Standalone, fully styleable progress bar. Supports an optional text
+    %       label (above, below, or overlaid) and optional tick marks. Pairs
+    %       with SmoothProgressBar for timer-driven animation; fully usable on
+    %       its own for deterministic 0..1 progress display.
     %
-    % =========================================================================
-    %                  CSSuicontrols  |  Prerau Laboratory
-    % =========================================================================
+    %       CSS element schema:
+    %           #css-root      Outer flex column container
+    %           .css-control   Bar track
+    %             .css-bar     Fill element
+    %             .css-ticks   Tick container (when ShowTicks=true)
+    %               .css-tick  Individual tick marks
+    %           .css-label     Text label (when TextPosition != 'none')
+    %             #cssbase-text  Span targeted by the setText bridge command
+    %
+    %       Key CSS custom properties: --color, --bg-color, --bar-height,
+    %       --bar-radius, --tick-color, --tick-height, --label-color,
+    %       --progress-pct.
+    %
+    %   See also: SmoothProgressBar, CSSBase, CSSPreset, CSSProgressBarDemo
+    %
+    %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
+    %        Source: https://github.com/preraulab/labcode_main
 
     % =====================================================================
     properties (Access = public)

@@ -1,41 +1,44 @@
 classdef CSSuiTextArea < CSSBase
-    %CSSuiTextArea  CSS-styled multiline text area backed by uihtml.
+    %CSSUITEXTAREA  CSS-styled multiline text area backed by uihtml
     %
-    %   USAGE
-    %     ta = CSSuiTextArea(parent, 'Placeholder','Enter notes...')
-    %     ta = CSSuiTextArea(parent, 'Value','hello', 'Style','shadow')
-    %     ta.ValueChangedFcn  = @(s,e) disp(e.Value);
-    %     ta.ValueChangingFcn = @(s,e) disp(e.Value);
+    %   Usage:
+    %       ta = CSSuiTextArea(parent, 'Placeholder', 'Enter notes...')
+    %       ta.ValueChangedFcn  = @(s,e) disp(e.Value);
+    %       ta.ValueChangingFcn = @(s,e) disp(e.Value);
+    %       ta.add('line');   ta.addnl('another line');
     %
-    %   PROPERTIES
-    %     Value             Text content                            default: ''
-    %     Placeholder       Hint text when empty                    default: ''
-    %     Label             Header label (above the text area)      default: ''
-    %     Editable          false = read-only                       default: true
-    %     Scroll            Show scrollbar when text overflows      default: false
-    %     ValueChangedFcn   @(src,evt) called on blur               default: []
-    %     ValueChangingFcn  @(src,evt) called on every keystroke    default: []
+    %   Inputs:
+    %       parent : graphics container -- required
     %
-    %   CONVENIENCE METHODS
-    %     ta.add(str)       Append str to the current value (no newline)
-    %     ta.addnl(str)     Append a newline then str to the current value
+    %   Name-Value Pairs:
+    %       'Value'            : char - text content (default: '')
+    %       'Placeholder'      : char - hint text when empty (default: '')
+    %       'Label'            : char - header label above the text area (default: '')
+    %       'Editable'         : logical - false = read-only (default: true)
+    %       'Scroll'           : logical - show scrollbar on overflow (default: false)
+    %       'WordWrap'         : logical - wrap long lines (default: true)
+    %       'MaxLines'         : integer - max lines kept in buffer, 0 = unlimited (default: 5000)
+    %       'ValueChangedFcn'  : function handle - @(src, evt) on blur (default: [])
+    %       'ValueChangingFcn' : function handle - @(src, evt) on each keystroke (default: [])
+    %       (plus all CSSBase name-value pairs)
     %
-    %   MULTILINE NOTES
-    %     Use sprintf or newline() to embed line breaks in Value:
-    %       ta.Value = sprintf('Line 1\nLine 2\nLine 3');
-    %       ta.addnl('another line');
-    %     Newlines typed by the user are returned correctly in ValueChangedFcn
-    %     and ValueChangingFcn callbacks via e.Value.
+    %   Outputs:
+    %       ta : CSSuiTextArea handle
     %
-    %   CSS ELEMENT SCHEMA
-    %     #css-root               Outer sizing container (CSSBase-managed)
-    %       .css-label            Header label div (when Label is set)
-    %       textarea#ta.css-control  The <textarea> element (IS the surface)
-    %     .css-disabled           On #css-root when Enabled=false
+    %   Notes:
+    %       Convenience methods: ta.add(str) (append), ta.addnl(str) (newline + append).
+    %       Use sprintf or newline() to embed line breaks in Value.
     %
-    %   CUSTOM CSS EXAMPLES
-    %     ta.CSS = '.css-control { line-height: 1.6; font-family: monospace; }';
-    %     ta.CSS = '.css-label   { font-weight: 700; color: #333; }';
+    %       CSS element schema:
+    %           #css-root      Outer sizing container
+    %             .css-label   Header label div (when Label is set)
+    %             textarea#ta.css-control  The <textarea> element
+    %           .css-disabled  On #css-root when Enabled=false
+    %
+    %   See also: CSSBase, CSSPreset, CSSuiEditField
+    %
+    %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
+    %        Source: https://github.com/preraulab/labcode_main
 
     properties (Access = public)
         Placeholder      = ''

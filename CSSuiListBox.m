@@ -1,35 +1,55 @@
 classdef CSSuiListBox < CSSBase
-    %CSSuiListBox  CSS-styled list box backed by uihtml.
+    %CSSUILISTBOX  CSS-styled list box backed by uihtml
     %
-    %   USAGE
-    %     lb = CSSuiListBox(parent, 'Items',{'Alpha','Beta','Gamma'})
-    %     lb = CSSuiListBox(parent, 'Items',myList, 'Multiselect',true, 'Style','shadow')
-    %     lb.ValueChangedFcn = @(s,e) disp(e.Value);
-    %     lb.Value = 'Beta';           % single-select: set by string
-    %     lb.Value = {'Alpha','Gamma'};% multi-select:  set by cell array
+    %   Usage:
+    %       lb = CSSuiListBox(parent, 'Items', {'Alpha','Beta','Gamma'})
+    %       lb = CSSuiListBox(parent, 'Items', myList, 'Multiselect', true, 'Style', 'shadow')
+    %       lb.ValueChangedFcn = @(s,e) disp(e.Value);
+    %       lb.Value = 'Beta';              % single-select: set by string
+    %       lb.Value = {'Alpha','Gamma'};   % multi-select:  set by cell
     %
-    %   PROPERTIES
-    %     Items             Cell array of option strings                default: {'Option 1','Option 2'}
-    %     Value             Selected item string (single) or cell (multi) default: Items{1}
-    %     Multiselect       logical — allow multiple selection          default: false
-    %     ValueChangedFcn   @(src, evt) callback                       default: []
+    %   Inputs:
+    %       parent : ui container - parent (default: new uifigure)
     %
-    %   EVENT STRUCT (ValueChangedFcn)
-    %     .Source           this CSSuiListBox object
-    %     .Value            new selection (char if single, cell if multi)
-    %     .PreviousValue    previous selection
+    %   Name-Value Pairs:
+    %       'Position'        : 1x4 double - [x y w h] (default: [10 10 200 150])
+    %       'Enabled'         : logical - enable interaction (default: true)
+    %       'TempDir'         : char - scratch dir (default: tempdir())
+    %       'Style'           : char - CSSBase style preset (default: 'shadow')
+    %       'CSS'             : char - extra CSS (default: '')
+    %       'CSSFile'         : char - extra CSS file (default: '')
+    %       'Items'           : 1xN cell of char - option strings (default: {})
+    %       'Value'           : char or cell - initial selection (default: '')
+    %       'Multiselect'     : logical - allow multiple selection (default: false)
+    %       'RowStriping'     : logical - alternate even-row tint (default: false)
+    %       'StripeColor'     : char - CSS color for the stripe (default: 'rgba(0,0,0,0.045)')
+    %       'ValueChangedFcn' : @(src, evt) selection callback (default: [])
+    %       'DoubleClickFcn'  : @(src, evt) double-click callback (default: [])
+    %       Additional CSS convenience properties are forwarded to CSSBase
+    %       (Color, BackgroundColor, FontSize, Padding, BorderRadius, etc.).
     %
-    %   CSS ELEMENT SCHEMA
-    %     #css-root               Outer sizing container (CSSBase-managed)
-    %       .css-control          Scrollable list container
-    %         .lb-item            Each list row
-    %         .lb-item.selected   Highlighted selected row(s)
-    %     .css-disabled           On #css-root when Enabled=false
+    %   Outputs:
+    %       lb : CSSuiListBox handle
     %
-    %   CUSTOM CSS EXAMPLES
-    %     lb.CSS = '.lb-item { font-size: 13px; }';
-    %     lb.CSS = '.lb-item.selected { background: #1976D2; color: #fff; }';
-    %     lb.CSS = '.css-control { border-radius: 4px; }';
+    %   Notes:
+    %       ValueChangedFcn event struct has fields .Source, .Value,
+    %       .PreviousValue. .Value is char if single-select, cell if multi.
+    %
+    %       CSS element schema:
+    %           #css-root                Outer sizing container (CSSBase-managed)
+    %             .css-control           Scrollable list container
+    %               .lb-item             Each list row
+    %               .lb-item.selected    Highlighted selected row(s)
+    %           .css-disabled            On #css-root when Enabled=false
+    %
+    %   Example:
+    %       lb.CSS = '.lb-item { font-size: 13px; }';
+    %       lb.CSS = '.lb-item.selected { background: #1976D2; color: #fff; }';
+    %
+    %   See also: CSSBase, CSSuiTable, CSSuiEditField
+    %
+    %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
+    %        Source: https://github.com/preraulab/labcode_main
 
     properties (Access = public)
         ValueChangedFcn = []
