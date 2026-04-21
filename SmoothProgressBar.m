@@ -153,6 +153,11 @@ classdef SmoothProgressBar < CSSUIProgressBar
                 error('SmoothProgressBar:iterationExceedsN', ...
                       'Iteration (%d) exceeds N (%d).', iteration, obj.N);
             end
+            if isempty(obj.StartTime_)
+                % start() was never called or reset() cleared it.
+                % Skip silently so callers can safely reset a halted bar.
+                return;
+            end
             now_ = tic;
             if ~isempty(obj.LastIterTime_)
                 dt = toc(obj.LastIterTime_);
