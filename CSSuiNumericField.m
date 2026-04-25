@@ -371,7 +371,13 @@ classdef CSSuiNumericField < CSSBase
                             obj.IsError_   = false;
                             if ~isempty(obj.ValueChangedFcn)
                                 evt = struct('Source',obj,'Value',newVal,'PreviousValue',oldVal);
-                                try, obj.ValueChangedFcn(obj,evt);
+                                try
+                                    if iscell(obj.ValueChangedFcn)
+                                        fn = obj.ValueChangedFcn{1};
+                                        fn(obj, evt, obj.ValueChangedFcn{2:end});
+                                    else
+                                        obj.ValueChangedFcn(obj, evt);
+                                    end
                                 catch ME, warning('uiNumericField:changedError','%s',ME.message); end
                             end
                         else

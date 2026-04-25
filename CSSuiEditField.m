@@ -272,7 +272,13 @@ classdef CSSuiEditField < CSSBase
                         obj.CommitVal_ = data.value;
                         if ~isempty(obj.ValueChangedFcn)
                             evt = struct('Source',obj,'Value',data.value,'PreviousValue',oldVal);
-                            try, obj.ValueChangedFcn(obj,evt);
+                            try
+                                if iscell(obj.ValueChangedFcn)
+                                    fn = obj.ValueChangedFcn{1};
+                                    fn(obj, evt, obj.ValueChangedFcn{2:end});
+                                else
+                                    obj.ValueChangedFcn(obj, evt);
+                                end
                             catch ME, warning('uiEditField:changedError','%s',ME.message); end
                         end
                     end

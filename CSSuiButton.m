@@ -335,8 +335,13 @@ classdef CSSuiButton < CSSBase
             if strcmp(data.event, 'click') & obj.Enabled_
                 if ~isempty(obj.ButtonPushedFcn)
                     try
-                        obj.ButtonPushedFcn(obj, ...
-                            struct('Source', obj, 'EventName', 'ButtonPushed'));
+                        evt = struct('Source', obj, 'EventName', 'ButtonPushed');
+                        if iscell(obj.ButtonPushedFcn)
+                            fn = obj.ButtonPushedFcn{1};
+                            fn(obj, evt, obj.ButtonPushedFcn{2:end});
+                        else
+                            obj.ButtonPushedFcn(obj, evt);
+                        end
                     catch ME
                         warning('CSSuiButton:callbackError', '%s', ME.message);
                     end

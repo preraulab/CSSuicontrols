@@ -276,7 +276,12 @@ classdef CSSuiDropdown < CSSBase
                             evt = struct('Source',obj, ...
                                 'Value',data.value, 'PreviousValue',oldVal);
                             try
-                                obj.ValueChangedFcn(obj, evt);
+                                if iscell(obj.ValueChangedFcn)
+                                    fn = obj.ValueChangedFcn{1};
+                                    fn(obj, evt, obj.ValueChangedFcn{2:end});
+                                else
+                                    obj.ValueChangedFcn(obj, evt);
+                                end
                             catch ME
                                 warning('uiDropdown:callbackError','%s',ME.message);
                             end
