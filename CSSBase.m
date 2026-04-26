@@ -773,9 +773,17 @@ classdef (Abstract) CSSBase < handle
             fn  = fieldnames(map);
             for i = 1:numel(fn)
                 val = obj.(fn{i});
-                if ~isempty(val)
-                    s = [s map.(fn{i}) ':' val ';']; %#ok<AGROW>
+                if isempty(val)
+                    continue;
                 end
+                % Convenience: numeric values for size-like CSS variables
+                % default to pixel units. Without this, e.g. FontSize = 14
+                % (numeric) is concatenated as char(14) and silently ignored
+                % by the browser.
+                if isnumeric(val)
+                    val = sprintf('%gpx', val);
+                end
+                s = [s map.(fn{i}) ':' val ';']; %#ok<AGROW>
             end
         end
 
