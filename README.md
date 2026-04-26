@@ -14,6 +14,8 @@ All components share a common base class (`CSSBase`), a consistent name-value-pa
 | `CSSuiEditField` | Single-line text input |
 | `CSSuiNumericField` | Numeric input with min/max/step |
 | `CSSuiSwitch` | Toggle switch |
+| `CSSuiCheckbox` | Single boolean checkbox with custom-CSS tick |
+| `CSSuiRadioGroup` | Radio group (single-select) or checkbox group (multi-select), horizontal or vertical |
 | `CSSuiTextArea` | Multi-line text input |
 | `CSSuiListBox` | Scrollable multi-select list |
 | `CSSuiTable` | Simple tabular display |
@@ -129,7 +131,7 @@ For a full demo: run `CSSDemo` or `CSSProgressBarDemo` at the MATLAB prompt.
 
 ## Files in this directory
 
-- Component classes (14 `.m` files): `CSSuiButton`, `CSSuiLabel`, `CSSuiDropdown`, `CSSuiEditField`, `CSSuiNumericField`, `CSSuiSwitch`, `CSSuiTextArea`, `CSSuiListBox`, `CSSuiTable`, `CSSUIProgressBar`, `SmoothProgressBar`
+- Component classes (14 `.m` files): `CSSuiButton`, `CSSuiLabel`, `CSSuiDropdown`, `CSSuiEditField`, `CSSuiNumericField`, `CSSuiSwitch`, `CSSuiCheckbox`, `CSSuiRadioGroup`, `CSSuiTextArea`, `CSSuiListBox`, `CSSuiTable`, `CSSUIProgressBar`, `SmoothProgressBar`
 - `CSSBase.m` — abstract lifecycle manager
 - `CSSPreset.m` — style preset factory
 - `CSSDemo.m`, `CSSProgressBarDemo.m` — runnable demos
