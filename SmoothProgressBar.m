@@ -192,16 +192,18 @@ classdef SmoothProgressBar < CSSUIProgressBar
             upd.avgIterMs = avgMs;
             upd.elapsedMs = elapsedMs;
             obj.pushCmd(upd);
-            % Flush so updateAnim reaches JS before the next caller push
-            % (typically the next iteration's LabelPrefix → setPrefix).
-            % Use full drawnow, NOT limitrate: callers (e.g. a batch loop)
-            % typically call drawnow or addnl many times during channel
-            % work, and drawnow limitrate is a no-op if a drawnow ran in
-            % the previous 50 ms — which silently discards the Data flush
-            % and lets the next setPrefix overwrite updateAnim. Without
-            % the flush JS never sees avgIterMs > 0 and the bar stays
-            % stuck in pulse mode even though curr_iteration has advanced.
+            % Force the Chromium event loop to actually consume this
+            % updateAnim Data write before MATLAB's next instruction
+            % (typically the caller's next-iteration LabelPrefix →
+            % setPrefix push). drawnow alone flushes MATLAB's render
+            % queue but does NOT wait for the embedded webview to read
+            % HTMLComponent.Data — so two writes back-to-back collapse
+            % to the latest value and JS never sees the updateAnim that
+            % carries avgIterMs > 0. The pause(0.005) yields the CPU
+            % long enough for the webview's onCommand to fire on this
+            % payload before the next write replaces it.
             drawnow
+            pause(0.005)
 
             if obj.Current_ >= obj.N && obj.N > 0 && ~obj.IsFinal_
                 obj.complete();
