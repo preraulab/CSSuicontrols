@@ -150,12 +150,20 @@ classdef SmoothProgressBar < CSSUIProgressBar
             anim.showTime          = obj.ShowTimeRemaining;
             anim.labelPrefix       = obj.LabelPrefix;
             obj.pushCmd(anim);
-            % Flush so startAnim reaches JS before any caller sets
-            % LabelPrefix / pushes updateAnim. Without this, back-to-back
-            % writes to HTMLComponent.Data collapse to the latest value
-            % and JS sees only the trailing cmd (with S still null), so
-            % the rAF loop never starts and the bar appears inert.
-            drawnow limitrate
+            % Force the Chromium event loop to actually consume this
+            % startAnim Data write before MATLAB's next instruction
+            % (typically the caller's first-iteration LabelPrefix →
+            % setPrefix push, or an updateAnim if the loop ticks
+            % immediately). drawnow alone flushes MATLAB's render queue
+            % but does NOT wait for the embedded webview to read
+            % HTMLComponent.Data — so two writes back-to-back collapse
+            % to the latest value and JS never sees startAnim. With S
+            % still null in JS, the rAF loop never starts and the bar
+            % appears inert. The pause(0.005) yields the CPU long
+            % enough for the webview's onCommand to fire on this
+            % payload before the next write replaces it.
+            drawnow
+            pause(0.005)
         end
 
         function updateIteration(obj, iteration)
