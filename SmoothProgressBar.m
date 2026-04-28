@@ -194,10 +194,14 @@ classdef SmoothProgressBar < CSSUIProgressBar
             obj.pushCmd(upd);
             % Flush so updateAnim reaches JS before the next caller push
             % (typically the next iteration's LabelPrefix → setPrefix).
-            % Without this, JS only ever sees the trailing setPrefix and
-            % avgIterMs stays 0, leaving the bar stuck in pulse mode even
-            % though MATLAB has already advanced curr_iteration.
-            drawnow limitrate
+            % Use full drawnow, NOT limitrate: callers (e.g. a batch loop)
+            % typically call drawnow or addnl many times during channel
+            % work, and drawnow limitrate is a no-op if a drawnow ran in
+            % the previous 50 ms — which silently discards the Data flush
+            % and lets the next setPrefix overwrite updateAnim. Without
+            % the flush JS never sees avgIterMs > 0 and the bar stays
+            % stuck in pulse mode even though curr_iteration has advanced.
+            drawnow
 
             if obj.Current_ >= obj.N && obj.N > 0 && ~obj.IsFinal_
                 obj.complete();
