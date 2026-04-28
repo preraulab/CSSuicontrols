@@ -192,6 +192,12 @@ classdef SmoothProgressBar < CSSUIProgressBar
             upd.avgIterMs = avgMs;
             upd.elapsedMs = elapsedMs;
             obj.pushCmd(upd);
+            % Flush so updateAnim reaches JS before the next caller push
+            % (typically the next iteration's LabelPrefix → setPrefix).
+            % Without this, JS only ever sees the trailing setPrefix and
+            % avgIterMs stays 0, leaving the bar stuck in pulse mode even
+            % though MATLAB has already advanced curr_iteration.
+            drawnow limitrate
 
             if obj.Current_ >= obj.N && obj.N > 0 && ~obj.IsFinal_
                 obj.complete();
