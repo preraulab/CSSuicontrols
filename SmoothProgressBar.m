@@ -150,6 +150,12 @@ classdef SmoothProgressBar < CSSUIProgressBar
             anim.showTime          = obj.ShowTimeRemaining;
             anim.labelPrefix       = obj.LabelPrefix;
             obj.pushCmd(anim);
+            % Flush so startAnim reaches JS before any caller sets
+            % LabelPrefix / pushes updateAnim. Without this, back-to-back
+            % writes to HTMLComponent.Data collapse to the latest value
+            % and JS sees only the trailing cmd (with S still null), so
+            % the rAF loop never starts and the bar appears inert.
+            drawnow limitrate
         end
 
         function updateIteration(obj, iteration)
@@ -206,6 +212,7 @@ classdef SmoothProgressBar < CSSUIProgressBar
             % browser so the next animation frame picks it up.
             if obj.Running_
                 obj.pushCmd(struct('cmd','setPrefix','value',val));
+                drawnow limitrate
             end
         end
 
