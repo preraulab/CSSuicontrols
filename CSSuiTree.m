@@ -159,8 +159,11 @@ classdef CSSuiTree < CSSBase
     methods (Access = protected)
 
         function pushDataToJS(obj)
-            if obj.Updating_ || ~obj.Loaded_, return, end
-            obj.pushCmd(struct('cmd','setData','tree', obj.normalizeData()));
+            if obj.Updating_, return, end
+            % Wrap the cell in an extra {} so struct() doesn't expand a
+            % 1×N cell into a struct array — JS expects `tree` to be a
+            % JSON array. pushCmd queues until 'ready' fires.
+            obj.pushCmd(struct('cmd','setData','tree', {obj.normalizeData()}));
         end
 
         function tree = normalizeData(obj)
