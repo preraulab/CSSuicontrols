@@ -31,6 +31,7 @@ classdef CSSuiTextArea < CSSBase
     %
     %       CSS element schema:
     %           #css-root      Outer sizing container
+    %             .cssui-textarea  Widget-type class on #css-root
     %             .css-label   Header label div (when Label is set)
     %             textarea#ta.css-control  The <textarea> element
     %           .css-disabled  On #css-root when Enabled=false

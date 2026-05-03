@@ -25,6 +25,7 @@ classdef CSSuiButton < CSSBase
     %   Notes:
     %       CSS element schema:
     %           #css-root       Outer sizing container (CSSBase-managed)
+    %             .cssui-button   Widget-type class on #css-root
     %           .css-control    The <button> element
     %             #cssbase-text   Span holding the button text (live-patchable)
     %             .css-icon       SVG or <img> icon element

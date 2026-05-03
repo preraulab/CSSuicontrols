@@ -39,6 +39,7 @@ classdef CSSuiRadioGroup < CSSBase
     %
     %       CSS element schema:
     %           #css-root                  Outer sizing container
+    %             .cssui-radio             Widget-type class on #css-root
     %             .rg-container            Flex container (items)
     %               label.css-control      Each option row (clickable)
     %                 input                Hidden native input

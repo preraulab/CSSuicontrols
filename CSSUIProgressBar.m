@@ -29,6 +29,8 @@ classdef CSSUIProgressBar < CSSBase
     %
     %       CSS element schema:
     %           #css-root      Outer flex column container
+    %             .cssui-progressbar  Widget-type class on #css-root
+    %                                 (also covers SmoothProgressBar)
     %           .css-control   Bar track
     %             .css-bar     Fill element
     %             .css-ticks   Tick container (when ShowTicks=true)

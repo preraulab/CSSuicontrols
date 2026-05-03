@@ -37,6 +37,7 @@ classdef CSSuiListBox < CSSBase
     %
     %       CSS element schema:
     %           #css-root                Outer sizing container (CSSBase-managed)
+    %             .cssui-listbox         Widget-type class on #css-root
     %             .css-control           Scrollable list container
     %               .lb-item             Each list row
     %               .lb-item.selected    Highlighted selected row(s)

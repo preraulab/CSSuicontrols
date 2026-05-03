@@ -24,6 +24,7 @@ classdef CSSuiDropdown < CSSBase
     %   Notes:
     %       CSS element schema:
     %           #css-root     Outer sizing container
+    %             .cssui-dropdown  Widget-type class on #css-root
     %             .css-label  Adjacent text label div (when Label is set)
     %             .css-control Dropdown surface wrapper
     %               select#sel  The native <select> element

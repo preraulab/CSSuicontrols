@@ -21,6 +21,7 @@ classdef CSSuiSwitch < CSSBase
     %   Notes:
     %       CSS element schema:
     %           #css-root               Outer sizing container
+    %             .cssui-switch         Widget-type class on #css-root
     %             label.css-control     Toggle track wrapper
     %               input#chk           Hidden <input type="checkbox">
     %               span.slider         Animated thumb / track fill

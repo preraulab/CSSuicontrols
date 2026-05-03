@@ -37,6 +37,7 @@ classdef CSSuiTable < CSSBase
     %
     %       CSS element schema:
     %           #css-root                Outer sizing container (CSSBase-managed)
+    %             .cssui-table           Widget-type class on #css-root
     %             .css-control           Scrollable table wrapper
     %               table                <table> element
     %                 thead > tr > th    Column headers

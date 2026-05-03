@@ -25,6 +25,7 @@ classdef CSSuiCheckbox < CSSBase
     %
     %       CSS element schema:
     %           #css-root                  Outer sizing container
+    %             .cssui-checkbox          Widget-type class on #css-root
     %             label.css-control        Wrapping label (clickable area)
     %               input#chk              Hidden <input type="checkbox">
     %               span.checkmark         Custom-styled box with tick

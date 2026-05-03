@@ -19,6 +19,7 @@ classdef CSSuiLabel < CSSBase
     %   Notes:
     %       CSS element schema:
     %           #css-root / .css-control   Same element — the label IS the root
+    %             .cssui-label             Widget-type class on #css-root
     %             #cssbase-text            Span holding the text (live-patchable)
     %           .css-disabled              On #css-root when Enabled=false
     %

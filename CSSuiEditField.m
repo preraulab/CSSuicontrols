@@ -32,6 +32,7 @@ classdef CSSuiEditField < CSSBase
     %   Notes:
     %       CSS element schema:
     %           #css-root                Outer sizing container (CSSBase-managed)
+    %             .cssui-edit            Widget-type class on #css-root
     %             .css-label             Adjacent text label div (when Label is set)
     %             .css-control           Input surface wrapper (bg / shadow)
     %               input#inp            The <input> element (transparent bg)

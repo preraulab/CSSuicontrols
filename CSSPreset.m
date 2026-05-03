@@ -28,9 +28,17 @@ classdef CSSPreset
     %
     %       A preset sets convenience properties (Color, BackgroundColor, ...)
     %       and appends a CSS string that targets the standard schema selectors:
-    %       .css-surface, .css-clickable, .css-label. Utility methods
-    %       scaleShadow(shadow, factor) and invertShadow(shadow) manipulate
-    %       shadow strings.
+    %       .css-surface, .css-clickable, .css-label, plus the widget-type
+    %       classes .cssui-button, .cssui-edit, .cssui-numeric, .cssui-textarea,
+    %       .cssui-dropdown, .cssui-listbox, .cssui-checkbox, .cssui-switch,
+    %       .cssui-radio, .cssui-search, .cssui-table, .cssui-tree,
+    %       .cssui-progressbar, .cssui-label (one is set on every widget's
+    %       #css-root). A single preset can therefore style buttons and
+    %       inputs differently:
+    %           p.CSS = ['.cssui-button .css-surface{background:#ececec;}' ...
+    %                    '.cssui-edit   .css-surface{background:#ffffff;}'];
+    %       Utility methods scaleShadow(shadow, factor) and invertShadow(shadow)
+    %       manipulate shadow strings.
     %
     %   See also: CSSBase, CSSuiButton, CSSuiDropdown, CSSuiEditField, CSSuiSwitch
     %

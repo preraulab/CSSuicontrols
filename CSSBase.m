@@ -60,6 +60,27 @@ classdef (Abstract) CSSBase < handle
     %     .css-clickable  Applied to interactive surfaces; enables hover lift and
     %                     active press animations from CSSPreset.
     %
+    %   Widget-type classes (additional class on #css-root, one per component):
+    %     .cssui-button        CSSuiButton
+    %     .cssui-label         CSSuiLabel
+    %     .cssui-edit          CSSuiEditField
+    %     .cssui-numeric       CSSuiNumericField
+    %     .cssui-textarea      CSSuiTextArea
+    %     .cssui-dropdown      CSSuiDropdown
+    %     .cssui-listbox       CSSuiListBox
+    %     .cssui-checkbox      CSSuiCheckbox
+    %     .cssui-switch        CSSuiSwitch
+    %     .cssui-radio         CSSuiRadioGroup
+    %     .cssui-search        CSSuiSearchBar
+    %     .cssui-table         CSSuiTable
+    %     .cssui-tree          CSSuiTree
+    %     .cssui-progressbar   CSSUIProgressBar (and SmoothProgressBar)
+    %
+    %   These let one CSSPreset target widget kinds differently from a single
+    %   .CSS string — e.g.  '.cssui-button .css-surface{background:#ececec;}'
+    %   tints buttons without affecting inputs.  The role classes above remain
+    %   the right tool for behavior shared across kinds (clickable hover etc.).
+    %
     %   -----------------------------------------------------------------------
     %   WRITING CUSTOM CSS  (obj.CSS property)
     %   -----------------------------------------------------------------------

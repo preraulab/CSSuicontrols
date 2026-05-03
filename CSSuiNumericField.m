@@ -29,6 +29,7 @@ classdef CSSuiNumericField < CSSBase
     %   Notes:
     %       CSS element schema:
     %           #css-root      Outer sizing container
+    %             .cssui-numeric  Widget-type class on #css-root
     %             .css-label   Adjacent text label (when Label is set)
     %             .css-control Input surface wrapper
     %               button#nf-dec Decrement button (when Step > 0)
