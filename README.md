@@ -20,7 +20,7 @@ All components share a common base class (`CSSBase`), a consistent name-value-pa
 | `CSSuiListBox` | Scrollable multi-select list |
 | `CSSuiSearchBar` | Pill-shaped search input with embedded submit button |
 | `CSSuiTree` | Filterable hierarchical tree, fast on 10k+ nodes |
-| `CSSuiTable` | Simple tabular display |
+| `CSSuiTable` | Tabular display with optional inline cell editing (`ColumnEditable`, `CellEditCallback`) |
 | `CSSUIProgressBar` | Horizontal progress bar with optional text label (above/below/on) and tick marks |
 | `SmoothProgressBar` | Animated progress bar driven by `requestAnimationFrame` inside the uihtml Chromium — 60 FPS with zero per-tick MATLAB IPC |
 

@@ -20,10 +20,12 @@ classdef CSSuiTable < CSSBase
     %       'Data'                : NxC cell - display values (default: {})
     %       'ColumnName'          : 1xC cell - header strings (default: {})
     %       'ColumnWidth'         : 1xC double - pixel widths, [] = auto (default: [])
+    %       'ColumnEditable'      : 1xC logical - per-column inline edit (default: false(1,C))
     %       'SelectionType'       : char - 'row' | 'cell' | 'none' (default: 'row')
     %       'Selection'           : row indices or Nx2 [row col] pairs (default: [])
     %       'SelectionChangedFcn' : @(src, evt) on click (default: [])
     %       'DoubleClickFcn'      : @(src, evt) on double-click (default: [])
+    %       'CellEditCallback'    : @(src, evt) on Enter/blur commit (default: [])
     %       'RowStriping'         : logical - alternate row shading (default: true)
     %       Additional CSS convenience properties are forwarded to CSSBase
     %       (Color, BackgroundColor, FontSize, Padding, BorderRadius, etc.).
@@ -34,6 +36,9 @@ classdef CSSuiTable < CSSBase
     %   Notes:
     %       SelectionChangedFcn event struct has fields .Source, .Selection,
     %       .PreviousSelection. DoubleClickFcn event struct has .Source, .Row.
+    %       CellEditCallback event struct has .Source, .Indices ([r c]),
+    %       .PreviousData (char), .NewData (char), .EditData (= NewData),
+    %       .Error (''). Shape mirrors uitable's CellEditCallback.
     %
     %       CSS element schema:
     %           #css-root                Outer sizing container (CSSBase-managed)
@@ -43,6 +48,7 @@ classdef CSSuiTable < CSSBase
     %                 thead > tr > th    Column headers
     %                 tbody > tr         Data rows
     %                   td               Data cells
+    %                     .tbl-cell-editable  Inline-editable cell
     %               .tbl-row.selected    Highlighted selected row(s)
     %               .tbl-cell.selected   Highlighted selected cell (cell mode)
     %           .css-disabled            On #css-root when Enabled=false
@@ -52,6 +58,12 @@ classdef CSSuiTable < CSSBase
     %       t.CSS = '.tbl-row.selected td { background: #bbdefb; }';
     %       t.CSS = 'td { font-size: 11px; }';
     %
+    %   Example (editable second column):
+    %       t = CSSuiTable(parent, 'Data', d, ...
+    %           'ColumnName', {'Name', 'Expression'}, ...
+    %           'ColumnEditable', [false true], ...
+    %           'CellEditCallback', @(s,e) disp(e.NewData));
+    %
     %   See also: CSSBase, CSSuiListBox, CSSuiEditField
     %
     %   ∿∿∿  Prerau Laboratory MATLAB Codebase · sleepEEG.org  ∿∿∿
@@ -59,6 +71,7 @@ classdef CSSuiTable < CSSBase
     properties (Access = public)
         SelectionChangedFcn = []
         DoubleClickFcn      = []
+        CellEditCallback    = []
         SelectionType       = 'row'   % 'row' | 'cell' | 'none'
         RowStriping         = true
     end
@@ -67,14 +80,16 @@ classdef CSSuiTable < CSSBase
         Data
         ColumnName
         ColumnWidth
+        ColumnEditable
         Selection
     end
 
     properties (Access = protected)
-        Data_        = {}
-        ColumnName_  = {}
-        ColumnWidth_ = []
-        Selection_   = []     % row indices (row) or Nx2 (cell)
+        Data_           = {}
+        ColumnName_     = {}
+        ColumnWidth_    = []
+        ColumnEditable_ = []
+        Selection_      = []     % row indices (row) or Nx2 (cell)
     end
 
     % =====================================================================
@@ -91,10 +106,12 @@ classdef CSSuiTable < CSSBase
                 options.Data                          = {}
                 options.ColumnName      (1,:) cell    = {}
                 options.ColumnWidth                   = []
+                options.ColumnEditable                = []
                 options.SelectionType   (1,:) char    = 'row'
                 options.Selection                     = []
                 options.SelectionChangedFcn           = []
                 options.DoubleClickFcn                = []
+                options.CellEditCallback              = []
                 options.RowStriping     (1,1) logical = true
                 % --- CSS convenience properties (forwarded to CSSBase) ----
                 options.Color               (1,:) char = ''
@@ -138,11 +155,13 @@ classdef CSSuiTable < CSSBase
             obj.applyCSSOptions(options);
             obj.SelectionChangedFcn = options.SelectionChangedFcn;
             obj.DoubleClickFcn      = options.DoubleClickFcn;
+            obj.CellEditCallback    = options.CellEditCallback;
             obj.SelectionType       = options.SelectionType;
             obj.RowStriping         = options.RowStriping;
             obj.Data_               = options.Data;
             obj.ColumnName_         = options.ColumnName;
             obj.ColumnWidth_        = options.ColumnWidth;
+            obj.ColumnEditable_     = logical(options.ColumnEditable);
             obj.Selection_          = options.Selection;
 
             obj.endInit();
@@ -175,6 +194,13 @@ classdef CSSuiTable < CSSBase
             if ~obj.Updating_ && obj.isReady(), obj.refresh(); end
         end
         function val = get.ColumnWidth(obj), val = obj.ColumnWidth_; end
+
+        % --- ColumnEditable (structural) ---------------------------------
+        function set.ColumnEditable(obj, val)
+            obj.ColumnEditable_ = logical(val);
+            if ~obj.Updating_ && obj.isReady(), obj.refresh(); end
+        end
+        function val = get.ColumnEditable(obj), val = obj.ColumnEditable_; end
 
         % --- Selection (patchable) ----------------------------------------
         function set.Selection(obj, val)
@@ -226,14 +252,27 @@ classdef CSSuiTable < CSSBase
                     else
                         cellTxt = '';
                     end
-                    cellSelClass = '';
+                    classes = {};
                     if strcmp(obj.SelectionType,'cell') && ~isempty(obj.Selection_)
                         if any(obj.Selection_(:,1)==r & obj.Selection_(:,2)==c)
-                            cellSelClass = ' class="tbl-cell selected"';
+                            classes{end+1} = 'tbl-cell';
+                            classes{end+1} = 'selected';
                         end
                     end
-                    rowHTML = [rowHTML sprintf('<td data-col="%d"%s>%s</td>', ...
-                        c, cellSelClass, cellTxt)]; %#ok<AGROW>
+                    isEditable = c <= numel(obj.ColumnEditable_) && obj.ColumnEditable_(c);
+                    if isEditable
+                        classes{end+1} = 'tbl-cell-editable';
+                    end
+                    classAttr = '';
+                    if ~isempty(classes)
+                        classAttr = sprintf(' class="%s"', strjoin(classes, ' '));
+                    end
+                    editAttr = '';
+                    if isEditable
+                        editAttr = ' contenteditable="true"';
+                    end
+                    rowHTML = [rowHTML sprintf('<td data-col="%d"%s%s>%s</td>', ...
+                        c, classAttr, editAttr, cellTxt)]; %#ok<AGROW>
                 end
                 rowHTML  = [rowHTML '</tr>']; %#ok<AGROW>
                 bodyHTML = [bodyHTML rowHTML]; %#ok<AGROW>
@@ -286,14 +325,40 @@ classdef CSSuiTable < CSSBase
                 'color:#2a4a80;' ...
                 '}' ...
                 '.tbl-row:hover:not(.selected) td{background:rgba(0,0,0,0.05);}' ...
+                '.tbl-cell-editable{cursor:text;}' ...
+                '.tbl-cell-editable:focus{' ...
+                'outline:2px solid rgba(100,140,200,0.55);' ...
+                'background:rgba(255,255,255,0.6);' ...
+                'overflow:visible;text-overflow:clip;white-space:pre;' ...
+                '}' ...
+                '.css-disabled .tbl-cell-editable{pointer-events:none;}' ...
                 '.css-disabled table{opacity:0.5;pointer-events:none;}' ...
             ];
 
             selTypeJS = ['var _selType="' obj.SelectionType '";'];
 
+            % Editable column array (1xC bool) — exposed to JS so that
+            % live setData rebuilds can restore contenteditable + class
+            % on the freshly created <td>s without needing an HTML
+            % refresh round-trip.
+            nColsHdr = max(size(obj.Data_, 2), numel(obj.ColumnName_));
+            if nColsHdr == 0, nColsHdr = 1; end
+            edArr = false(1, nColsHdr);
+            for c = 1:numel(obj.ColumnEditable_)
+                if c <= nColsHdr
+                    edArr(c) = obj.ColumnEditable_(c);
+                end
+            end
+            edPieces = cell(1, numel(edArr));
+            for c = 1:numel(edArr)
+                if edArr(c), edPieces{c} = 'true'; else, edPieces{c} = 'false'; end
+            end
+            editableJS = ['var _editable=[' strjoin(edPieces, ',') '];'];
+
             compJS = [ ...
                 '<script>' ...
                 selTypeJS ...
+                editableJS ...
                 'function _getSelection(){' ...
                 'var sel=[];' ...
                 'if(_selType==="row"){' ...
@@ -338,9 +403,34 @@ classdef CSSuiTable < CSSBase
                 '});' ...
                 '});' ...
                 '}' ...
+                'function _attachEditListeners(tbody){' ...
+                'tbody.querySelectorAll(".tbl-cell-editable").forEach(function(td){' ...
+                'td.addEventListener("focus",function(){' ...
+                'td.dataset.preEdit=td.textContent;' ...
+                '});' ...
+                'td.addEventListener("keydown",function(e){' ...
+                'if(e.key==="Enter"){e.preventDefault();td.blur();}' ...
+                'else if(e.key==="Escape"){' ...
+                'td.textContent=td.dataset.preEdit||"";' ...
+                'td.blur();' ...
+                '}' ...
+                '});' ...
+                'td.addEventListener("blur",function(){' ...
+                'var oldV=td.dataset.preEdit;' ...
+                'var newV=td.textContent;' ...
+                'if(oldV!==undefined&&oldV!==newV){' ...
+                'var r=parseInt(td.parentElement.getAttribute("data-row"));' ...
+                'var c=parseInt(td.getAttribute("data-col"));' ...
+                'window.sendEvent({event:"edit",row:r,col:c,oldValue:oldV,newValue:newV});' ...
+                '}' ...
+                '});' ...
+                'td.addEventListener("click",function(e){e.stopPropagation();});' ...
+                'td.addEventListener("dblclick",function(e){e.stopPropagation();});' ...
+                '});' ...
+                '}' ...
                 'window.componentSetup=function(hc){' ...
                 'var tbody=document.querySelector("tbody");' ...
-                'if(tbody)_attachRowListeners(tbody);' ...
+                'if(tbody){_attachRowListeners(tbody);_attachEditListeners(tbody);}' ...
                 '};' ...
                 'window.onCommand=function(cmd){' ...
                 'if(cmd.cmd==="setData"){' ...
@@ -355,11 +445,16 @@ classdef CSSuiTable < CSSBase
                 'var td=document.createElement("td");' ...
                 'td.setAttribute("data-col",ci+1);' ...
                 'td.textContent=cell;' ...
+                'if(_editable[ci]){' ...
+                'td.setAttribute("contenteditable","true");' ...
+                'td.classList.add("tbl-cell-editable");' ...
+                '}' ...
                 'tr.appendChild(td);' ...
                 '});' ...
                 'tbody.appendChild(tr);' ...
                 '});' ...
                 '_attachRowListeners(tbody);' ...
+                '_attachEditListeners(tbody);' ...
                 '}' ...
                 'if(cmd.cmd==="setSelection"){' ...
                 'var sel=cmd.selection||[];' ...
@@ -448,6 +543,30 @@ classdef CSSuiTable < CSSBase
                             obj.DoubleClickFcn(obj, evt);
                         catch ME
                             warning('CSSuiTable:dblclickError','%s',ME.message);
+                        end
+                    end
+                case 'edit'
+                    if obj.Enabled_
+                        r = double(data.row);
+                        c = double(data.col);
+                        oldV = char(data.oldValue);
+                        newV = char(data.newValue);
+                        if r >= 1 && r <= size(obj.Data_,1) && ...
+                                c >= 1 && c <= size(obj.Data_,2)
+                            obj.Data_{r,c} = newV;
+                        end
+                        if ~isempty(obj.CellEditCallback)
+                            evt = struct('Source', obj, ...
+                                'Indices',      [r c], ...
+                                'PreviousData', oldV, ...
+                                'NewData',      newV, ...
+                                'EditData',     newV, ...
+                                'Error',        '');
+                            try
+                                obj.CellEditCallback(obj, evt);
+                            catch ME
+                                warning('CSSuiTable:editError','%s',ME.message);
+                            end
                         end
                     end
             end
