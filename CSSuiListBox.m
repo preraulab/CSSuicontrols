@@ -310,8 +310,17 @@ classdef CSSuiListBox < CSSBase
                                 newVal  = CSSuiListBox.cellFirst(newCell, '');
                                 prevVal = CSSuiListBox.cellFirst(oldVal,  '');
                             end
-                            evt = struct('Source',obj, ...
-                                'Value',newVal, 'PreviousValue',prevVal);
+                            % struct(...) with two cell-array values
+                            % expands them element-by-element into a
+                            % struct array; that errors when
+                            % numel(newVal) ~= numel(prevVal) (any
+                            % time the user changes the selection
+                            % count under Multiselect). Build the
+                            % struct field-by-field to keep the cells
+                            % whole.
+                            evt = struct('Source', obj);
+                            evt.Value         = newVal;
+                            evt.PreviousValue = prevVal;
                             try
                                 obj.ValueChangedFcn(obj, evt);
                             catch ME
