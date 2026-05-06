@@ -285,9 +285,7 @@ classdef (Abstract) CSSBase < handle
             end
 
             obj.Enabled_  = options.Enabled;
-            obj.TempDir_  = options.TempDir;
-
-            obj.validateTempDir(options.TempDir);
+            obj.TempDir_  = CSSBase.resolveWritableTempDir(options.TempDir);
 
             obj.HTMLComponent = uihtml(parent, ...
                 'Position',       options.Position, ...
@@ -874,6 +872,64 @@ classdef (Abstract) CSSBase < handle
         function s = attrEscape(s)
             s = CSSBase.htmlEscape(s);
             s = strrep(s, '"', '&quot;');
+        end
+
+        function d = resolveWritableTempDir(requested)
+            % Probe `requested` for write access; if it fails (common on
+            % HPC accounts whose TMPDIR points at an unprovisioned scratch
+            % path), walk a list of platform fallbacks and return the
+            % first writable one. Emits a one-shot warning per session
+            % so the user knows their environment is misconfigured —
+            % subsequent widgets stay silent.
+            persistent warnedOnce
+            if CSSBase.dirIsWritable(requested)
+                d = requested;
+                return
+            end
+            if ispc
+                cands = {getenv('TEMP'), getenv('TMP'), 'C:\Temp', pwd};
+            else
+                home = getenv('HOME');
+                if isempty(home)
+                    homeFallback = '';
+                else
+                    homeFallback = fullfile(home, '.matlab_cssui_cache');
+                end
+                cands = {'/tmp', getenv('TMPDIR'), homeFallback, pwd};
+            end
+            for k = 1:numel(cands)
+                c = cands{k};
+                if isempty(c) || strcmp(c, requested), continue, end
+                if ~isfolder(c)
+                    try, mkdir(c); catch, continue; end
+                end
+                if CSSBase.dirIsWritable(c)
+                    d = c;
+                    if isempty(warnedOnce)
+                        warnedOnce = true;
+                        warning('CSSBase:tempDirFallback', ...
+                            ['CSS widgets cannot write to MATLAB''s tempdir (%s); ' ...
+                             'falling back to %s. Set TMPDIR to a writable path or ' ...
+                             'create %s to silence this.'], requested, c, requested);
+                    end
+                    return
+                end
+            end
+            error('CSSBase:noWritableTempDir', ...
+                'No writable temp directory found. Tried: %s', ...
+                strjoin([{requested}, cands(~cellfun(@isempty, cands))], ', '));
+        end
+
+        function tf = dirIsWritable(d)
+            tf = false;
+            if isempty(d) || ~isfolder(d), return, end
+            probe = fullfile(d, ['cssbase_probe_' CSSBase.randomTag()]);
+            fid = fopen(probe, 'w');
+            if fid > 0
+                fclose(fid);
+                try, delete(probe); catch, end
+                tf = true;
+            end
         end
 
     end
