@@ -259,8 +259,16 @@ classdef CSSuiTable < CSSBase
                 wStyle = '';
                 if c <= numel(obj.ColumnWidth_) && ~isempty(obj.ColumnWidth_) ...
                         && ~isnan(obj.ColumnWidth_(c))
-                    wStyle = sprintf(' style="width:%dpx;min-width:%dpx;"', ...
-                        obj.ColumnWidth_(c), obj.ColumnWidth_(c));
+                    % width acts as the preferred column width; min-width is
+                    % deliberately omitted so columns can shrink to fit a
+                    % narrower container (e.g. when the vertical scrollbar
+                    % gutter eats into the content area). After the user
+                    % drags a column resizer, the resize handler pins
+                    % min-width to the new width so the resized column
+                    % stays put even if that pushes the table wider than
+                    % the container — at which point horizontal scrolling
+                    % kicks in, which is what the user wanted by dragging.
+                    wStyle = sprintf(' style="width:%dpx;"', obj.ColumnWidth_(c));
                 end
                 resizerHTML = '';
                 if obj.ColumnResizable
