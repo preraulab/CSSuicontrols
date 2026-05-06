@@ -835,14 +835,46 @@ classdef (Abstract) CSSBase < handle
         end
 
         function fp = writeTempFile(obj, html)
-            fp  = fullfile(obj.TempDir_, ...
-                ['cssbase_' CSSBase.randomTag() '.html']);
-            fid = fopen(fp, 'w', 'n', 'UTF-8');
-            if fid == -1
-                error('CSSBase:fileError', 'Cannot write temp file: %s', fp);
+            % Try obj.TempDir_ first; if the actual UTF-8 fopen fails
+            % (some NFS mounts let plain fopen through but reject the
+            % encoding-aware open), fall back the same way the
+            % constructor does and update obj.TempDir_ to the dir
+            % that actually worked. This is the resilient version of
+            % the probe — the test isn't a separate trial-write but
+            % the very call we need to succeed.
+            cands = {obj.TempDir_};
+            if ispc
+                cands = [cands, {getenv('TEMP'), getenv('TMP'), 'C:\Temp', pwd}];
+            else
+                home = getenv('HOME');
+                if ~isempty(home)
+                    cands = [cands, {'/tmp', getenv('TMPDIR'), ...
+                        fullfile(home, '.matlab_cssui_cache'), pwd}];
+                else
+                    cands = [cands, {'/tmp', getenv('TMPDIR'), pwd}];
+                end
             end
-            fprintf(fid, '%s', html);
-            fclose(fid);
+            tried = {};
+            for k = 1:numel(cands)
+                c = cands{k};
+                if isempty(c) || any(strcmp(c, tried)), continue, end
+                tried{end+1} = c; %#ok<AGROW>
+                if ~isfolder(c)
+                    try, mkdir(c); catch, continue; end
+                end
+                fp  = fullfile(c, ['cssbase_' CSSBase.randomTag() '.html']);
+                fid = fopen(fp, 'w', 'n', 'UTF-8');
+                if fid ~= -1
+                    fprintf(fid, '%s', html);
+                    fclose(fid);
+                    if ~strcmp(c, obj.TempDir_)
+                        obj.TempDir_ = c;
+                    end
+                    return
+                end
+            end
+            error('CSSBase:fileError', ...
+                'Cannot write temp file. Tried: %s', strjoin(tried, ', '));
         end
 
         function safeDeleteTempFile(obj)
