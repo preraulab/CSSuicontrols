@@ -344,7 +344,12 @@ classdef CSSuiButton < CSSBase
                             obj.ButtonPushedFcn(obj, evt);
                         end
                     catch ME
-                        warning('CSSuiButton:callbackError', '%s', ME.message);
+                        % Surface the full report (identifier + message +
+                        % stack) so the offending line is visible in the
+                        % command window. The bare ME.message version
+                        % (which we used to show) made every callback
+                        % failure look like an opaque generic warning.
+                        warning('CSSuiButton:callbackError', '%s', getReport(ME, 'extended'));
                     end
                 end
             end
